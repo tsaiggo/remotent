@@ -592,12 +592,12 @@ code   { font-family: var(--mono); font-size: 0.85em; color: var(--ink); }
   font-size: 12px;
   z-index: 2;
   box-shadow: 0 0 0 1px var(--line) inset;
+  overflow: hidden;
+  padding: 0;
 }
 .turn--human .turn__avatar {
   background: var(--orange-soft);
   color: var(--orange-ink);
-  overflow: hidden;
-  padding: 0;
 }
 .turn--human .turn__avatar:has(.turn__avatar-img) {
   background: transparent;
