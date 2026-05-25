@@ -593,7 +593,23 @@ code   { font-family: var(--mono); font-size: 0.85em; color: var(--ink); }
   z-index: 2;
   box-shadow: 0 0 0 1px var(--line) inset;
 }
-.turn--human .turn__avatar { background: var(--orange-soft); color: var(--orange-ink); }
+.turn--human .turn__avatar {
+  background: var(--orange-soft);
+  color: var(--orange-ink);
+  overflow: hidden;
+  padding: 0;
+}
+.turn--human .turn__avatar:has(.turn__avatar-img) {
+  background: transparent;
+  box-shadow: 0 0 0 1px var(--line) inset;
+}
+.turn__avatar-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  border-radius: 50%;
+}
 .turn__avatar--dev      { background: var(--green-soft);  color: var(--green-ink); }
 .turn__avatar--design   { background: var(--purple-soft); color: var(--purple-ink); }
 .turn__avatar--research { background: var(--blue-soft);   color: var(--blue-ink); }

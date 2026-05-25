@@ -202,7 +202,8 @@
     const isHuman = turn.kind === 'human';
     const node = turn.node || '';
     const avatarLetter = isHuman ? escapeHtml((turn.who || 'U').charAt(0).toUpperCase()) : '';
-    const avatarInner = isHuman ? avatarLetter : (SVG[node] || avatarLetter);
+    const humanAvatarImg = '<img class="turn__avatar-img" src="https://github.com/user-attachments/assets/ee226c0a-c50d-44d5-b97b-52808f1b3c85" alt="">';
+    const avatarInner = isHuman ? humanAvatarImg : (SVG[node] || avatarLetter);
     const avatarClass = isHuman
       ? 'turn__avatar'
       : `turn__avatar turn__avatar--${node}${turn.live ? ' is-live' : ''}`;
