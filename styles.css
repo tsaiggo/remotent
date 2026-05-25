@@ -429,6 +429,12 @@ code   { font-family: var(--mono); font-size: 0.85em; color: var(--ink); }
      surrounding shell at narrow viewports. */
   grid-template-columns: minmax(0, 1fr);
   min-width: 0;
+  /* The canvas sits inside the shell's single 100vh row. Without an
+     explicit min-height: 0, the default `min-height: auto` lets the
+     canvas overflow the shell when its 1fr row (the timeline) has a lot
+     of content — which pushes the composer below the fold with no way
+     to reach it (body has overflow: hidden). */
+  min-height: 0;
   background: var(--bg);
 }
 .canvas > * { position: relative; z-index: 1; }
@@ -544,6 +550,12 @@ code   { font-family: var(--mono); font-size: 0.85em; color: var(--ink); }
   margin: 0;
   padding: 8px 96px 64px;
   overflow-y: auto;
+  /* Grid items default to min-height: auto, which makes the 1fr row
+     grow to fit the timeline's content instead of clipping and scrolling
+     inside it. min-height: 0 lets the 1fr track actually constrain the
+     timeline so it scrolls internally and the composer stays pinned to
+     the bottom of the canvas. */
+  min-height: 0;
   scrollbar-width: thin;
   scrollbar-color: var(--line-hi) transparent;
 }
