@@ -196,10 +196,10 @@
 
   const HUMAN_AVATAR_URL = 'https://github.com/user-attachments/assets/ee226c0a-c50d-44d5-b97b-52808f1b3c85';
   const AGENT_AVATAR = {
-    dev:      'headers/acp_notion_avatar_08_long_hair_glasses.png',
-    design:   'headers/acp_notion_avatar_06_high_bun_earrings.png',
-    research: 'headers/acp_notion_avatar_05_wavy_hair_stubble.png',
-    agent:    'headers/acp_notion_avatar_09_headset_support.png',
+    dev:      'assets/avatars/dev.png',
+    design:   'assets/avatars/design.png',
+    research: 'assets/avatars/research.png',
+    agent:    'assets/avatars/agent.png',
   };
 
   const escapeHtml = (s) =>
