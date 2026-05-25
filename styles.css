@@ -881,7 +881,20 @@ code   { font-family: var(--mono); font-size: 0.85em; color: var(--ink); }
   .sessions { display: none; }
   .canvas__title { padding: 32px 24px 14px; }
   .timeline      { padding: 8px 24px 48px; overflow-y: visible; }
-  .composer      { padding: 12px 24px 18px; }
+  .canvas > .composer {
+    padding: 12px 24px 18px;
+    /* Keep the composer docked to the bottom of the viewport while the
+       page scrolls behind it. Sticky (rather than fixed) keeps it inside
+       the canvas grid so the timeline still reserves the right amount of
+       vertical space and content isn't hidden underneath it. The
+       `.canvas > .composer` selector matches the specificity of the
+       `.canvas > *` rule above that sets position: relative. */
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    background: var(--bg);
+    box-shadow: 0 -8px 16px -12px rgba(15, 15, 15, 0.18);
+  }
   .canvas__head  { padding: 10px 16px; }
   .turn__tools   { display: none; }
   .display       { font-size: 32px; }
