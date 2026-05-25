@@ -196,10 +196,10 @@
 
   const HUMAN_AVATAR_URL = 'https://github.com/user-attachments/assets/ee226c0a-c50d-44d5-b97b-52808f1b3c85';
   const AGENT_AVATAR = {
-    dev:      'https://github.com/user-attachments/assets/b723e51a-f3bc-40a6-bdbb-15e98008e498',
-    design:   'https://github.com/user-attachments/assets/6cc9fa03-731b-4451-860d-0d7513af63a4',
-    research: 'https://github.com/user-attachments/assets/15521dec-c6d8-492b-a411-d04bf0bcdfc6',
-    agent:    'https://github.com/user-attachments/assets/53242080-89cc-4ac2-a913-81859b4b0eab',
+    dev:      'headers/acp_notion_avatar_08_long_hair_glasses.png',
+    design:   'headers/acp_notion_avatar_06_high_bun_earrings.png',
+    research: 'headers/acp_notion_avatar_05_wavy_hair_stubble.png',
+    agent:    'headers/acp_notion_avatar_09_headset_support.png',
   };
 
   const escapeHtml = (s) =>
