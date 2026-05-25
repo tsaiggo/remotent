@@ -74,7 +74,7 @@
             <p class="sessions__sub">Multi-Agent Console <span class="sep">·</span> ACP v0.2</p>
           </div>
 
-          <button class="sessions__new" aria-label="New session">
+          <button class="sessions__new" id="newSessionBtn" aria-label="New session">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4">
               <path d="M12 5v14M5 12h14"/>
             </svg>
@@ -110,7 +110,7 @@
           </h2>
 
           <ul class="thread-list" role="list">
-            <li class="thread is-active" data-kind="agent" data-pinned="true" tabindex="0">
+            <li class="thread is-active" data-kind="agent" data-pinned="true" data-session-id="orbital" tabindex="0">
               <span class="thread__dot is-live" aria-hidden="true"></span>
               <div class="thread__body">
                 <div class="thread__row">
@@ -128,7 +128,7 @@
               </button>
             </li>
 
-            <li class="thread" data-kind="human" data-pinned="true" tabindex="0">
+            <li class="thread" data-kind="human" data-pinned="true" data-session-id="q3-brief" tabindex="0">
               <span class="thread__dot" aria-hidden="true"></span>
               <div class="thread__body">
                 <div class="thread__row">
@@ -154,8 +154,8 @@
             <span class="group__rule" aria-hidden="true"></span>
           </h2>
 
-          <ul class="thread-list" role="list">
-            <li class="thread" data-kind="agent" tabindex="0">
+          <ul class="thread-list" id="todayList" role="list">
+            <li class="thread" data-kind="agent" data-session-id="design-audit" tabindex="0">
               <span class="thread__dot is-warn" aria-hidden="true"></span>
               <div class="thread__body">
                 <div class="thread__row">
@@ -170,7 +170,7 @@
               <button class="thread__pin" aria-label="Pin"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 2l8 8-5 1-4 4-1 5-2-2-5 5-1-1 5-5-2-2 5-1 4-4z"/></svg></button>
             </li>
 
-            <li class="thread" data-kind="agent" tabindex="0">
+            <li class="thread" data-kind="agent" data-session-id="citation-crawler" tabindex="0">
               <span class="thread__dot" aria-hidden="true"></span>
               <div class="thread__body">
                 <div class="thread__row">
@@ -185,7 +185,7 @@
               <button class="thread__pin" aria-label="Pin"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 2l8 8-5 1-4 4-1 5-2-2-5 5-1-1 5-5-2-2 5-1 4-4z"/></svg></button>
             </li>
 
-            <li class="thread" data-kind="human" tabindex="0">
+            <li class="thread" data-kind="human" data-session-id="pair-hana" tabindex="0">
               <span class="thread__dot" aria-hidden="true"></span>
               <div class="thread__body">
                 <div class="thread__row">
@@ -210,7 +210,7 @@
           </h2>
 
           <ul class="thread-list" role="list">
-            <li class="thread" data-kind="agent" tabindex="0">
+            <li class="thread" data-kind="agent" data-session-id="build-triage" tabindex="0">
               <span class="thread__dot" aria-hidden="true"></span>
               <div class="thread__body">
                 <div class="thread__row">
@@ -224,7 +224,7 @@
               </div>
               <button class="thread__pin" aria-label="Pin"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 2l8 8-5 1-4 4-1 5-2-2-5 5-1-1 5-5-2-2 5-1 4-4z"/></svg></button>
             </li>
-            <li class="thread" data-kind="human" tabindex="0">
+            <li class="thread" data-kind="human" data-session-id="onboarding-mira" tabindex="0">
               <span class="thread__dot" aria-hidden="true"></span>
               <div class="thread__body">
                 <div class="thread__row">
@@ -251,10 +251,10 @@
             <span class="canvas__sep">/</span>
             <span>Sessions</span>
             <span class="canvas__sep">/</span>
-            <span class="canvas__crumb-current">Orbital telemetry refactor</span>
+            <span class="canvas__crumb-current" id="crumbCurrent">Orbital telemetry refactor</span>
           </div>
 
-          <div class="canvas__nodes" aria-label="Active nodes">
+          <div class="canvas__nodes" id="canvasNodes" aria-label="Active nodes">
             <span class="node node--dev" title="Dev node — streaming">
               <span class="node__pulse"></span>dev
             </span>
@@ -276,7 +276,7 @@
         </header>
 
         <!-- Title block -->
-        <div class="canvas__title">
+        <div class="canvas__title" id="canvasTitle">
           <p class="kicker">Session 0241 <span class="kicker__dot"></span> started 02:14 UTC</p>
           <h2 class="display">
             <span class="display__serif">Orbital telemetry</span>
@@ -289,7 +289,7 @@
         </div>
 
         <!-- Timeline -->
-        <ol class="timeline" aria-label="Collaboration timeline">
+        <ol class="timeline" id="timeline" aria-label="Collaboration timeline">
           <!-- Human turn -->
           <li class="turn turn--human">
             <div class="turn__gutter">

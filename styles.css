@@ -755,6 +755,7 @@ code   { font-family: var(--mono); font-size: 0.85em; color: var(--ink); }
   background: var(--bg);
   border: 1px solid var(--line-2);
   border-radius: var(--radius-lg);
+  box-shadow: 0 1px 2px rgba(15, 15, 15, 0.04);
   transition: border-color .12s var(--tap), box-shadow .12s var(--tap);
 }
 .composer__box:focus-within {
@@ -805,6 +806,8 @@ code   { font-family: var(--mono); font-size: 0.85em; color: var(--ink); }
   font-family: var(--sans);
   font-size: 14px;
   color: var(--ink);
+  padding: 4px 0;
+  min-height: 24px;
 }
 .composer__input::placeholder {
   color: var(--ink-3);
