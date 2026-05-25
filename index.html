@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Remotent — Multi-Agent Workspace</title>
+    <meta
+      name="description"
+      content="Remotent. A cyber-minimalist control surface for orchestrating multi-agent ACP sessions."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <!-- ───────────── Application Shell ───────────── -->
+    <main class="shell" role="application" aria-label="Remotent workspace">
+      <!-- ░░░ Column 1 — Icon Rail ░░░ -->
+      <nav class="rail" aria-label="Primary">
+        <a class="rail__brand" href="#" aria-label="Remotent home">
+          <span class="rail__mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+              <path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 17h7" stroke="currentColor" stroke-width="1.25"/>
+              <circle cx="16.5" cy="13.5" r="1.25" fill="currentColor"/>
+            </svg>
+          </span>
+        </a>
+
+        <ul class="rail__list" role="list">
+          <li>
+            <button class="rail__btn is-active" aria-label="User Hub" data-tooltip="User Hub · 用户中枢">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.25">
+                <circle cx="12" cy="8" r="3.25"/>
+                <path d="M5 20c1.2-3.4 4-5 7-5s5.8 1.6 7 5"/>
+              </svg>
+            </button>
+          </li>
+          <li>
+            <button class="rail__btn" aria-label="Node Overview" data-tooltip="Nodes · 节点总览">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.25">
+                <circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/>
+                <circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/>
+                <path d="M8 6h8M6 8v8M18 8v8M8 18h8"/>
+              </svg>
+            </button>
+          </li>
+          <li>
+            <button class="rail__btn" aria-label="Settings" data-tooltip="Settings · 设置">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.25">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1A2 2 0 1 1 4.4 17l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1A2 2 0 1 1 7 4.4l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1A2 2 0 1 1 19.6 7l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>
+              </svg>
+            </button>
+          </li>
+        </ul>
+
+        <div class="rail__foot">
+          <span class="rail__pulse" aria-hidden="true"></span>
+          <span class="rail__user" aria-label="Signed in as Wen">W</span>
+        </div>
+      </nav>
+
+      <!-- ░░░ Column 2 — Session List ░░░ -->
+      <aside class="sessions" aria-label="Sessions">
+        <header class="sessions__head">
+          <div class="sessions__title">
+            <h1>
+              <span class="serif">Remot</span><span class="sans">·ent</span>
+            </h1>
+            <p class="sessions__sub">Multi-Agent Console <span class="sep">·</span> ACP v0.2</p>
+          </div>
+
+          <button class="sessions__new" aria-label="New session">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            <span>New</span>
+          </button>
+        </header>
+
+        <div class="sessions__search">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+            <circle cx="11" cy="11" r="6.5"/><path d="m20 20-3.5-3.5"/>
+          </svg>
+          <input type="search" placeholder="Search sessions, nodes, threads…" aria-label="Search" />
+          <kbd>⌘K</kbd>
+        </div>
+
+        <nav class="tabs" role="tablist" aria-label="Filter sessions">
+          <button class="tabs__btn is-active" role="tab" aria-selected="true" data-filter="all">
+            All <span class="tabs__count">24</span>
+          </button>
+          <button class="tabs__btn" role="tab" aria-selected="false" data-filter="human">
+            Human <span class="tabs__count">07</span>
+          </button>
+          <button class="tabs__btn" role="tab" aria-selected="false" data-filter="agent">
+            Agent <span class="tabs__count">17</span>
+          </button>
+        </nav>
+
+        <!-- Pinned ─────────────────────── -->
+        <section class="group" aria-label="Pinned">
+          <h2 class="group__label">
+            <span>Pinned</span>
+            <span class="group__rule" aria-hidden="true"></span>
+          </h2>
+
+          <ul class="thread-list" role="list">
+            <li class="thread is-active" data-kind="agent" data-pinned="true" tabindex="0">
+              <span class="thread__dot is-live" aria-hidden="true"></span>
+              <div class="thread__body">
+                <div class="thread__row">
+                  <span class="thread__title">Orbital telemetry refactor</span>
+                  <time class="thread__time">02:14</time>
+                </div>
+                <p class="thread__snippet">
+                  <span class="tag tag--dev">dev</span>
+                  <span class="tag tag--design">design</span>
+                  <em>3 agents streaming · 14 turns</em>
+                </p>
+              </div>
+              <button class="thread__pin is-on" aria-label="Unpin" title="Pinned">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M14 2l8 8-5 1-4 4-1 5-2-2-5 5-1-1 5-5-2-2 5-1 4-4z"/></svg>
+              </button>
+            </li>
+
+            <li class="thread" data-kind="human" data-pinned="true" tabindex="0">
+              <span class="thread__dot" aria-hidden="true"></span>
+              <div class="thread__body">
+                <div class="thread__row">
+                  <span class="thread__title">Q3 research brief — Wen</span>
+                  <time class="thread__time">Yesterday</time>
+                </div>
+                <p class="thread__snippet">
+                  <span class="tag tag--human">human</span>
+                  Draft outline approved, awaiting citations.
+                </p>
+              </div>
+              <button class="thread__pin is-on" aria-label="Unpin" title="Pinned">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M14 2l8 8-5 1-4 4-1 5-2-2-5 5-1-1 5-5-2-2 5-1 4-4z"/></svg>
+              </button>
+            </li>
+          </ul>
+        </section>
+
+        <!-- Today ─────────────────────── -->
+        <section class="group" aria-label="Today">
+          <h2 class="group__label">
+            <span>Today</span>
+            <span class="group__rule" aria-hidden="true"></span>
+          </h2>
+
+          <ul class="thread-list" role="list">
+            <li class="thread" data-kind="agent" tabindex="0">
+              <span class="thread__dot is-warn" aria-hidden="true"></span>
+              <div class="thread__body">
+                <div class="thread__row">
+                  <span class="thread__title">Design system audit</span>
+                  <time class="thread__time">11:02</time>
+                </div>
+                <p class="thread__snippet">
+                  <span class="tag tag--design">design</span>
+                  Awaiting human review on token diff.
+                </p>
+              </div>
+              <button class="thread__pin" aria-label="Pin"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 2l8 8-5 1-4 4-1 5-2-2-5 5-1-1 5-5-2-2 5-1 4-4z"/></svg></button>
+            </li>
+
+            <li class="thread" data-kind="agent" tabindex="0">
+              <span class="thread__dot" aria-hidden="true"></span>
+              <div class="thread__body">
+                <div class="thread__row">
+                  <span class="thread__title">Citation crawler · arxiv-2411</span>
+                  <time class="thread__time">09:47</time>
+                </div>
+                <p class="thread__snippet">
+                  <span class="tag tag--research">research</span>
+                  142 sources indexed.
+                </p>
+              </div>
+              <button class="thread__pin" aria-label="Pin"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 2l8 8-5 1-4 4-1 5-2-2-5 5-1-1 5-5-2-2 5-1 4-4z"/></svg></button>
+            </li>
+
+            <li class="thread" data-kind="human" tabindex="0">
+              <span class="thread__dot" aria-hidden="true"></span>
+              <div class="thread__body">
+                <div class="thread__row">
+                  <span class="thread__title">Pair review — Hana</span>
+                  <time class="thread__time">08:30</time>
+                </div>
+                <p class="thread__snippet">
+                  <span class="tag tag--human">human</span>
+                  “Let's revisit the routing layer tomorrow.”
+                </p>
+              </div>
+              <button class="thread__pin" aria-label="Pin"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 2l8 8-5 1-4 4-1 5-2-2-5 5-1-1 5-5-2-2 5-1 4-4z"/></svg></button>
+            </li>
+          </ul>
+        </section>
+
+        <!-- Earlier ─────────────────────── -->
+        <section class="group" aria-label="Earlier">
+          <h2 class="group__label">
+            <span>Earlier this week</span>
+            <span class="group__rule" aria-hidden="true"></span>
+          </h2>
+
+          <ul class="thread-list" role="list">
+            <li class="thread" data-kind="agent" tabindex="0">
+              <span class="thread__dot" aria-hidden="true"></span>
+              <div class="thread__body">
+                <div class="thread__row">
+                  <span class="thread__title">Build pipeline triage</span>
+                  <time class="thread__time">Mon</time>
+                </div>
+                <p class="thread__snippet">
+                  <span class="tag tag--dev">dev</span>
+                  Resolved · 4 patches merged.
+                </p>
+              </div>
+              <button class="thread__pin" aria-label="Pin"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 2l8 8-5 1-4 4-1 5-2-2-5 5-1-1 5-5-2-2 5-1 4-4z"/></svg></button>
+            </li>
+            <li class="thread" data-kind="human" tabindex="0">
+              <span class="thread__dot" aria-hidden="true"></span>
+              <div class="thread__body">
+                <div class="thread__row">
+                  <span class="thread__title">Onboarding — Mira</span>
+                  <time class="thread__time">Sun</time>
+                </div>
+                <p class="thread__snippet">
+                  <span class="tag tag--human">human</span>
+                  Access provisioned, welcome doc sent.
+                </p>
+              </div>
+              <button class="thread__pin" aria-label="Pin"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 2l8 8-5 1-4 4-1 5-2-2-5 5-1-1 5-5-2-2 5-1 4-4z"/></svg></button>
+            </li>
+          </ul>
+        </section>
+      </aside>
+
+      <!-- ░░░ Column 3 — Canvas ░░░ -->
+      <section class="canvas" aria-label="Conversation canvas">
+        <!-- Canvas header / breadcrumb -->
+        <header class="canvas__head">
+          <div class="canvas__crumbs">
+            <span>User Hub</span>
+            <span class="canvas__sep">/</span>
+            <span>Sessions</span>
+            <span class="canvas__sep">/</span>
+            <span class="canvas__crumb-current">Orbital telemetry refactor</span>
+          </div>
+
+          <div class="canvas__nodes" aria-label="Active nodes">
+            <span class="node node--dev" title="Dev node — streaming">
+              <span class="node__pulse"></span>dev
+            </span>
+            <span class="node node--design" title="Design node — streaming">
+              <span class="node__pulse"></span>design
+            </span>
+            <span class="node node--research" title="Research node — idle">research</span>
+            <span class="canvas__divider" aria-hidden="true"></span>
+            <button class="canvas__icon" aria-label="Share">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v14"/></svg>
+            </button>
+            <button class="canvas__icon" aria-label="Branch">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="6" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="8" r="2"/><path d="M6 8v8M8 6h6a4 4 0 0 1 4 4"/></svg>
+            </button>
+            <button class="canvas__icon" aria-label="More">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+            </button>
+          </div>
+        </header>
+
+        <!-- Title block -->
+        <div class="canvas__title">
+          <p class="kicker">Session 0241 <span class="kicker__dot"></span> started 02:14 UTC</p>
+          <h2 class="display">
+            <span class="display__serif">Orbital telemetry</span>
+            <span class="display__sans"> refactor.</span>
+          </h2>
+          <p class="lede">
+            Three agents collaborating with you to migrate the legacy <code>/v1</code> ingest path
+            onto the new streaming runtime — without dropping a single packet.
+          </p>
+        </div>
+
+        <!-- Timeline -->
+        <ol class="timeline" aria-label="Collaboration timeline">
+          <!-- Human turn -->
+          <li class="turn turn--human">
+            <div class="turn__gutter">
+              <span class="turn__avatar" aria-hidden="true">W</span>
+              <span class="turn__rail" aria-hidden="true"></span>
+            </div>
+            <div class="turn__body">
+              <header class="turn__head">
+                <span class="turn__who">Wen</span>
+                <span class="turn__role">human</span>
+                <time class="turn__time">02:14:06</time>
+              </header>
+              <p class="prose">
+                Bring up the three nodes. Goal: replace the v1 ingest with the streaming runtime,
+                keep packet loss under 0.01 %, and produce a migration brief by EOD.
+              </p>
+            </div>
+          </li>
+
+          <!-- Agent turn — Dev -->
+          <li class="turn turn--agent" data-node="dev">
+            <div class="turn__gutter">
+              <span class="turn__avatar turn__avatar--dev" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m8 6-6 6 6 6M16 6l6 6-6 6"/></svg>
+              </span>
+              <span class="turn__rail" aria-hidden="true"></span>
+            </div>
+            <div class="turn__body">
+              <header class="turn__head">
+                <span class="turn__who">dev.node</span>
+                <span class="turn__role turn__role--dev">agent · gpt-codex</span>
+                <time class="turn__time">02:14:12</time>
+                <span class="turn__tools">
+                  <span class="chip">repo.read</span>
+                  <span class="chip">shell</span>
+                </span>
+              </header>
+              <p class="prose">
+                Inspecting <code>services/ingest-v1</code>. The hot path is in
+                <code>pipeline.go:142</code> — a single goroutine fans in 14 partitions.
+                Proposing to split fan-in across N workers and replace
+                the <em>at-least-once</em> ack with the new <em>exactly-once</em> primitive.
+              </p>
+
+              <pre class="terminal" aria-label="dev.node terminal">
+<span class="t-prompt">dev.node ▸</span> <span class="t-cmd">acp.tool/shell</span>
+<span class="t-line">$ rg "fan_in" services/ingest-v1 -l</span>
+<span class="t-out">services/ingest-v1/pipeline.go
+services/ingest-v1/internal/router.go</span>
+<span class="t-line">$ go test ./services/ingest-v1/... -run Stream -count=1</span>
+<span class="t-out">ok   services/ingest-v1/internal     0.412s
+ok   services/ingest-v1/pipeline     1.804s</span>
+<span class="t-prompt">dev.node ▸</span> <span class="t-stream">drafting patch<span class="t-caret">▍</span></span>
+              </pre>
+            </div>
+          </li>
+
+          <!-- Agent turn — Design -->
+          <li class="turn turn--agent" data-node="design">
+            <div class="turn__gutter">
+              <span class="turn__avatar turn__avatar--design" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h16"/></svg>
+              </span>
+              <span class="turn__rail" aria-hidden="true"></span>
+            </div>
+            <div class="turn__body">
+              <header class="turn__head">
+                <span class="turn__who">design.node</span>
+                <span class="turn__role turn__role--design">agent · claude-opus</span>
+                <time class="turn__time">02:14:18</time>
+                <span class="turn__tools"><span class="chip">figma.read</span></span>
+              </header>
+              <p class="prose">
+                Re-aligning the operator console to surface partition health as a first-class
+                signal. Replacing the legacy donut with a hairline sparkline strip — same data,
+                a tenth of the visual weight.
+              </p>
+
+              <figure class="artifact">
+                <div class="artifact__chart" aria-hidden="true">
+                  <svg viewBox="0 0 320 64" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="g1" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stop-color="#a78bfa" stop-opacity=".55"/>
+                        <stop offset="100%" stop-color="#a78bfa" stop-opacity="0"/>
+                      </linearGradient>
+                    </defs>
+                    <path d="M0,46 L20,40 40,44 60,30 80,34 100,22 120,28 140,18 160,24 180,14 200,20 220,10 240,18 260,8 280,16 300,6 320,12 L320,64 L0,64 Z" fill="url(#g1)"/>
+                    <path d="M0,46 L20,40 40,44 60,30 80,34 100,22 120,28 140,18 160,24 180,14 200,20 220,10 240,18 260,8 280,16 300,6 320,12" fill="none" stroke="#a78bfa" stroke-width="1"/>
+                  </svg>
+                </div>
+                <figcaption>
+                  <span>partition.health · last 60 min</span>
+                  <span class="artifact__meta">▲ 4.2% · variance 0.011</span>
+                </figcaption>
+              </figure>
+            </div>
+          </li>
+
+          <!-- Agent turn — Research (idle/condensed) -->
+          <li class="turn turn--agent turn--quiet" data-node="research">
+            <div class="turn__gutter">
+              <span class="turn__avatar turn__avatar--research" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-3.5-3.5"/></svg>
+              </span>
+              <span class="turn__rail" aria-hidden="true"></span>
+            </div>
+            <div class="turn__body">
+              <header class="turn__head">
+                <span class="turn__who">research.node</span>
+                <span class="turn__role">agent · gemini</span>
+                <time class="turn__time">02:14:21</time>
+              </header>
+              <p class="prose prose--quiet">
+                Surfaced 3 prior post-mortems on exactly-once delivery (Kafka 2.0,
+                NATS JetStream, Pulsar). Citations queued — <a href="#">expand 3 refs</a>.
+              </p>
+            </div>
+          </li>
+
+          <!-- Streaming live block -->
+          <li class="turn turn--agent turn--streaming" data-node="dev">
+            <div class="turn__gutter">
+              <span class="turn__avatar turn__avatar--dev is-live" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m8 6-6 6 6 6M16 6l6 6-6 6"/></svg>
+              </span>
+            </div>
+            <div class="turn__body">
+              <header class="turn__head">
+                <span class="turn__who">dev.node</span>
+                <span class="turn__role turn__role--dev">streaming</span>
+                <span class="live-dot" aria-hidden="true"></span>
+                <time class="turn__time" id="liveClock">02:14:33</time>
+              </header>
+              <p class="prose" id="streamText">
+                Patch ready. Splitting fan-in into <code>runtime.NumCPU()</code> workers,
+                draining via context cancellation, and gating commits behind the new ack
+                primitive. Estimated cut-over window<span class="caret">▍</span>
+              </p>
+            </div>
+          </li>
+        </ol>
+
+        <!-- Composer -->
+        <footer class="composer">
+          <div class="composer__rail" aria-hidden="true"></div>
+          <div class="composer__box">
+            <div class="composer__toolbar">
+              <button class="composer__chip" type="button">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                Attach
+              </button>
+              <button class="composer__chip" type="button">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 6h16M4 12h10M4 18h16"/></svg>
+                Prompt
+              </button>
+              <button class="composer__chip" type="button">@ mention</button>
+              <span class="composer__spacer"></span>
+              <span class="composer__model">
+                <span class="composer__dot"></span> dev · design · research
+              </span>
+            </div>
+
+            <form class="composer__form" id="composer">
+              <span class="composer__prompt" aria-hidden="true">▸</span>
+              <input
+                id="composerInput"
+                class="composer__input"
+                type="text"
+                autocomplete="off"
+                placeholder="Direct the swarm — type a command, or / for tools…"
+                aria-label="Command input"
+              />
+              <kbd class="composer__kbd">⌘ ⏎</kbd>
+              <button class="composer__send" type="submit" aria-label="Send">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </button>
+            </form>
+          </div>
+          <p class="composer__hint">
+            ACP stream secured · end-to-end · <em>your turn shapes the swarm.</em>
+          </p>
+        </footer>
+      </section>
+    </main>
+
+    <script src="./app.js" defer></script>
+  </body>
+</html>
