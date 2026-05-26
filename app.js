@@ -1200,8 +1200,8 @@
     if (!scrim || toggles.length === 0) return;
 
     // Keep in sync with the `.sessions / .nodes-panel { transition }`
-    // duration in styles.css (currently `.22s`). If you change that,
-    // change this too.
+    // duration in styles.css (currently `.22s` / 220ms). If you change
+    // that, change this too.
     const DRAWER_TRANSITION_MS = 220;
 
     function getPanel(target) {
