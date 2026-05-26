@@ -1302,25 +1302,27 @@
 
   /* Tiny dotted-path setter so we can bind nested fields like
      `acp.sessionMode` or `tools.2.scope` directly to form inputs.
-     Hardened against prototype pollution: any path segment named
-     `__proto__`, `constructor`, or `prototype` aborts the assignment,
-     and traversal only follows own object properties. Bindings are
+     Hardened against prototype pollution: every path segment is
+     checked against `__proto__`, `constructor`, and `prototype`
+     immediately before any property access or assignment, and
+     traversal only follows own object properties. Bindings are
      emitted by our own render helpers, so this guards against a
      tampered DOM rather than untrusted user input. */
   function setByPath(obj, path, value) {
     const parts = path.split('.');
-    for (let j = 0; j < parts.length; j++) {
-      const p = parts[j];
-      if (p === '__proto__' || p === 'constructor' || p === 'prototype') {
+    let cur = obj;
+    for (let i = 0; i < parts.length; i++) {
+      const k = parts[i];
+      if (k === '__proto__' || k === 'constructor' || k === 'prototype') {
         if (typeof console !== 'undefined' && console.warn) {
           console.warn('setByPath: refusing forbidden key in path', path);
         }
         return;
       }
-    }
-    let cur = obj;
-    for (let i = 0; i < parts.length - 1; i++) {
-      const k = parts[i];
+      if (i === parts.length - 1) {
+        cur[k] = value;
+        return;
+      }
       const next = parts[i + 1];
       if (!Object.prototype.hasOwnProperty.call(cur, k) || cur[k] == null) {
         cur[k] = (/^\d+$/.test(next) ? [] : {});
@@ -1329,7 +1331,6 @@
       if (child === null || typeof child !== 'object') return;
       cur = child;
     }
-    cur[parts[parts.length - 1]] = value;
   }
 
   function handleNodeAction(name, act) {
