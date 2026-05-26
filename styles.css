@@ -61,6 +61,7 @@
   --radius:     3px;               /* default — buttons, tags */
   --radius-md:  4px;               /* inputs, list rows */
   --radius-lg:  6px;               /* cards, callouts */
+  --space-band: 32px;              /* vertical breathing room between IA bands in node detail */
   --tap:        cubic-bezier(.2,.7,.2,1);
 
   /* Notion menu shadow (only used on floating elements) */
@@ -569,10 +570,10 @@ code   { font-family: var(--mono); font-size: 0.85em; color: var(--ink); }
 .turn {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 14px 0;
+  gap: 10px;
+  padding: 11px 0;
 }
-.turn:first-child { padding-top: 8px; }
+.turn:first-child { padding-top: 6px; }
 
 .turn__gutter {
   position: relative;
@@ -635,8 +636,8 @@ code   { font-family: var(--mono); font-size: 0.85em; color: var(--ink); }
 .turn__body > .prose {
   background: var(--bg-2);
   border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 10px 14px;
+  border-radius: 12px;
+  padding: 7px 12px;
   max-width: 100%;
 }
 .turn--agent[data-node="dev"]      .turn__body > .prose { border-color: rgba(39, 174, 96, 0.18); }
@@ -691,8 +692,8 @@ code   { font-family: var(--mono); font-size: 0.85em; color: var(--ink); }
 .prose {
   margin: 0;
   font-family: var(--sans);
-  font-size: 16px;
-  line-height: 1.6;
+  font-size: 14px;
+  line-height: 1.55;
   color: var(--ink);
   max-width: 70ch;
 }
@@ -786,7 +787,7 @@ code   { font-family: var(--mono); font-size: 0.85em; color: var(--ink); }
    Composer — Notion input block
    ============================================================ */
 .composer {
-  padding: 16px 96px 24px;
+  padding: 12px 96px 18px;
   border-top: 1px solid var(--line);
   background: var(--bg);
 }
@@ -811,8 +812,8 @@ code   { font-family: var(--mono); font-size: 0.85em; color: var(--ink); }
 }
 .composer__chip {
   display: inline-flex; align-items: center; gap: 5px;
-  padding: 4px 8px;
-  font-size: 13px;
+  padding: 3px 7px;
+  font-size: 12px;
   color: var(--ink-2);
   border-radius: var(--radius);
   transition: background .12s var(--tap), color .12s var(--tap);
@@ -835,13 +836,13 @@ code   { font-family: var(--mono); font-size: 0.85em; color: var(--ink); }
 }
 
 .composer__form {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 12px;
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px;
 }
 .composer__prompt {
   color: var(--ink-3);
   font-family: var(--sans);
-  font-size: 14px;
+  font-size: 13px;
 }
 .composer__input {
   flex: 1;
@@ -849,10 +850,10 @@ code   { font-family: var(--mono); font-size: 0.85em; color: var(--ink); }
      instead of forcing the row to overflow. */
   min-width: 0;
   font-family: var(--sans);
-  font-size: 14px;
+  font-size: 13px;
   color: var(--ink);
-  padding: 4px 0;
-  min-height: 24px;
+  padding: 3px 0;
+  min-height: 22px;
 }
 .composer__input::placeholder {
   color: var(--ink-3);
@@ -870,7 +871,7 @@ code   { font-family: var(--mono); font-size: 0.85em; color: var(--ink); }
 }
 .composer__send {
   display: grid; place-items: center;
-  width: 28px; height: 28px;
+  width: 26px; height: 26px;
   color: #ffffff;
   background: var(--blue);
   border-radius: var(--radius);
@@ -879,8 +880,8 @@ code   { font-family: var(--mono); font-size: 0.85em; color: var(--ink); }
 .composer__send:hover { background: var(--blue-hover); }
 
 .composer__hint {
-  margin: 8px 2px 0;
-  font-size: 12px;
+  margin: 6px 2px 0;
+  font-size: 11px;
   color: var(--ink-3);
   text-align: center;
 }
@@ -1398,7 +1399,6 @@ code   { font-family: var(--mono); font-size: 0.85em; color: var(--ink); }
   /* Scrollbar thumbs blend with panels */
   .sessions::-webkit-scrollbar-thumb { border-color: var(--bg-1); }
   .timeline::-webkit-scrollbar-thumb { border-color: var(--bg); }
-}
 }
 
 /* ============================================================
