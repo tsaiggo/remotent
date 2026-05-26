@@ -1184,4 +1184,82 @@
   // Prime fleet counts so the rail toggle shows correct numbers even
   // before the user enters the Nodes view.
   refreshFleetMeta();
+
+  /* ============================================================
+     Mobile / tablet drawer
+     ------------------------------------------------------------
+     On narrow viewports the second column (sessions list or nodes
+     panel) is positioned off-canvas via CSS and slid in by adding
+     `.is-open`. A hamburger button in each canvas header toggles
+     the appropriate drawer for the current view; tapping the
+     scrim, pressing ESC, or selecting an item closes it.
+     ============================================================ */
+  (function initDrawer() {
+    const scrim = document.getElementById('drawerScrim');
+    const toggles = document.querySelectorAll('.drawer-toggle');
+    if (!scrim || toggles.length === 0) return;
+
+    function getPanel(target) {
+      return target === 'nodes'
+        ? document.getElementById('nodesPanel')
+        : document.getElementById('sessionsPanel');
+    }
+
+    function openDrawer(target) {
+      const panel = getPanel(target);
+      if (!panel || panel.hidden) return;
+      panel.classList.add('is-open');
+      scrim.hidden = false;
+      // Force layout flush before adding the class so the transition runs.
+      void scrim.offsetWidth;
+      scrim.classList.add('is-open');
+      document.body.classList.add('is-drawer-open');
+      toggles.forEach((b) => {
+        if (b.dataset.drawerTarget === target) {
+          b.setAttribute('aria-expanded', 'true');
+        }
+      });
+    }
+
+    function closeDrawer() {
+      document.querySelectorAll('.sessions.is-open, .nodes-panel.is-open')
+        .forEach((p) => p.classList.remove('is-open'));
+      scrim.classList.remove('is-open');
+      document.body.classList.remove('is-drawer-open');
+      toggles.forEach((b) => b.setAttribute('aria-expanded', 'false'));
+      // Hide the scrim element after the fade-out so it doesn't catch taps.
+      setTimeout(() => {
+        if (!scrim.classList.contains('is-open')) scrim.hidden = true;
+      }, 220);
+    }
+
+    toggles.forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const target = btn.dataset.drawerTarget || 'sessions';
+        const panel = getPanel(target);
+        if (panel && panel.classList.contains('is-open')) closeDrawer();
+        else openDrawer(target);
+      });
+    });
+
+    scrim.addEventListener('click', closeDrawer);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' &&
+          document.body.classList.contains('is-drawer-open')) {
+        closeDrawer();
+      }
+    });
+
+    // Auto-close after selecting a session or a node so the user lands
+    // back on the canvas — matches iOS sheet behaviour.
+    document.addEventListener('click', (e) => {
+      if (!document.body.classList.contains('is-drawer-open')) return;
+      const t = e.target;
+      if (t.closest && (t.closest('.thread') || t.closest('.node-row'))) {
+        closeDrawer();
+      }
+    });
+  })();
 })();

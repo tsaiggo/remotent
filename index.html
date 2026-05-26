@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Remotent — Multi-Agent Workspace</title>
     <meta
       name="description"
@@ -65,7 +65,7 @@
       </nav>
 
       <!-- ░░░ Column 2 — Session List ░░░ -->
-      <aside class="sessions" aria-label="Sessions">
+      <aside class="sessions" id="sessionsPanel" aria-label="Sessions">
         <header class="sessions__head">
           <div class="sessions__title">
             <h1>
@@ -246,6 +246,11 @@
       <section class="canvas" aria-label="Conversation canvas">
         <!-- Canvas header / breadcrumb -->
         <header class="canvas__head">
+          <button class="drawer-toggle" type="button" data-drawer-target="sessions" aria-label="Show sessions" aria-controls="sessionsPanel" aria-expanded="false">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+              <path d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
           <div class="canvas__crumbs">
             <span>User Hub</span>
             <span class="canvas__sep">/</span>
@@ -488,7 +493,7 @@ ok   services/ingest-v1/pipeline     1.804s</span>
       </section>
 
       <!-- ░░░ Node Overview — Column 2: Node list ░░░ -->
-      <aside class="nodes-panel" aria-label="Nodes" hidden>
+      <aside class="nodes-panel" id="nodesPanel" aria-label="Nodes" hidden>
         <header class="sessions__head">
           <div class="sessions__title">
             <h1>
@@ -545,6 +550,11 @@ ok   services/ingest-v1/pipeline     1.804s</span>
       <!-- ░░░ Node Overview — Column 3: Node detail canvas ░░░ -->
       <section class="canvas canvas--node" aria-label="Node detail" hidden>
         <header class="canvas__head">
+          <button class="drawer-toggle" type="button" data-drawer-target="nodes" aria-label="Show nodes" aria-controls="nodesPanel" aria-expanded="false">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+              <path d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
           <div class="canvas__crumbs">
             <span>Fleet</span>
             <span class="canvas__sep">/</span>
@@ -569,6 +579,11 @@ ok   services/ingest-v1/pipeline     1.804s</span>
           <!-- Capabilities + Activity sections rendered by JS -->
         </div>
       </section>
+
+      <!-- Backdrop for slide-in drawers on tablet/mobile breakpoints.
+           Placed inside `.shell` so it shares the same stacking context
+           as the sessions/nodes drawers and their higher z-index wins. -->
+      <div class="scrim" id="drawerScrim" hidden aria-hidden="true"></div>
     </main>
 
     <script src="./app.js" defer></script>

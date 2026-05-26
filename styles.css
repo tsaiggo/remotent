@@ -63,6 +63,17 @@
   --radius-lg:  6px;               /* cards, callouts */
   --tap:        cubic-bezier(.2,.7,.2,1);
 
+  /* Viewport — use dynamic viewport units on iOS so the URL bar doesn't
+     trap the composer below the fold. Falls back to 100vh on older browsers. */
+  --shell-h:    100vh;
+
+  /* Safe-area insets (iPhone notch / Home Indicator). Default to 0 when
+     env() is unsupported so layout stays identical on desktop. */
+  --safe-top:    env(safe-area-inset-top, 0px);
+  --safe-right:  env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left:   env(safe-area-inset-left, 0px);
+
   /* Notion menu shadow (only used on floating elements) */
   --shadow:
     rgba(15, 15, 15, 0.05) 0 0 0 1px,
@@ -98,6 +109,10 @@ code   { font-family: var(--mono); font-size: 0.85em; color: var(--ink); }
   border-radius: var(--radius);
 }
 
+@supports (height: 100dvh) {
+  :root { --shell-h: 100dvh; }
+}
+
 /* ============================================================
    Shell — three-column grid
    ============================================================ */
@@ -106,7 +121,7 @@ code   { font-family: var(--mono); font-size: 0.85em; color: var(--ink); }
   z-index: 1;
   display: grid;
   grid-template-columns: var(--rail-w) var(--sessions-w) 1fr;
-  height: 100vh;
+  height: var(--shell-h);
   width: 100%;
   background: var(--bg);
 }
@@ -148,24 +163,28 @@ code   { font-family: var(--mono); font-size: 0.85em; color: var(--ink); }
 .rail__btn:hover { color: var(--ink-2); background: var(--hover); }
 .rail__btn.is-active { color: var(--ink); background: var(--hover-2); }
 
-/* Tooltip on hover — Notion floating chip */
-.rail__btn[data-tooltip]::after {
-  content: attr(data-tooltip);
-  position: absolute; left: calc(100% + 10px); top: 50%;
-  transform: translateY(-50%) translateX(-4px);
-  padding: 4px 8px;
-  font-size: 12px;
-  white-space: nowrap;
-  color: #ffffff;
-  background: #2f2f2f;
-  border-radius: var(--radius);
-  opacity: 0; pointer-events: none;
-  transition: opacity .12s var(--tap), transform .12s var(--tap);
-  z-index: 50;
-}
-.rail__btn:hover[data-tooltip]::after {
-  opacity: 1;
-  transform: translateY(-50%) translateX(0);
+/* Tooltip on hover — Notion floating chip. Only attach on devices that
+   actually have a hover-capable pointer so it never gets "stuck" after a
+   tap on iPhone/iPad. */
+@media (hover: hover) and (pointer: fine) {
+  .rail__btn[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute; left: calc(100% + 10px); top: 50%;
+    transform: translateY(-50%) translateX(-4px);
+    padding: 4px 8px;
+    font-size: 12px;
+    white-space: nowrap;
+    color: #ffffff;
+    background: #2f2f2f;
+    border-radius: var(--radius);
+    opacity: 0; pointer-events: none;
+    transition: opacity .12s var(--tap), transform .12s var(--tap);
+    z-index: 50;
+  }
+  .rail__btn:hover[data-tooltip]::after {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
 }
 
 .rail__foot {
@@ -1289,48 +1308,237 @@ code   { font-family: var(--mono); font-size: 0.85em; color: var(--ink); }
 .canvas__nodes .node[data-node-link]:hover { filter: brightness(0.97); }
 
 /* ============================================================
-   Responsive — collapse sessions on narrow viewports
+   Drawer toggle (mobile/tablet) + scrim backdrop
+   Hidden on desktop; revealed via the responsive blocks below.
    ============================================================ */
-@media (max-width: 1100px) {
-  :root { --sessions-w: 240px; }
+.drawer-toggle {
+  display: none;            /* shown only at narrow breakpoints */
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  margin-right: 4px;
+  color: var(--ink-2);
+  border-radius: var(--radius);
+  transition: background .12s var(--tap), color .12s var(--tap);
+}
+.drawer-toggle:hover { background: var(--hover); color: var(--ink); }
+.drawer-toggle:active { background: var(--press); }
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 15, 15, 0.36);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s var(--tap);
+  z-index: 80;
+}
+.scrim.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.scrim[hidden] { display: none; }
+
+/* Lock background scrolling while any drawer is open. */
+body.is-drawer-open { overflow: hidden; }
+
+/* ============================================================
+   Responsive — five tiers covering iPhone, iPad and desktop.
+   Order matters: rules cascade from widest to narrowest.
+   ============================================================ */
+
+/* ---- Tier 1: Tablet-landscape (1025–1366px) -----------------
+   iPad Pro 11/12.9 landscape, small laptops. Keep three columns
+   but tighten the sessions column and the canvas gutters. */
+@media (min-width: 1025px) and (max-width: 1366px) {
+  :root { --sessions-w: 220px; }
   .canvas__title { padding: 40px 56px 14px; }
   .timeline      { padding: 8px 56px 56px; }
   .composer      { padding: 14px 56px 20px; }
   .node-detail   { padding: 8px 56px 56px; }
+  .chip-grid     { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 }
-@media (max-width: 860px) {
-  /* Let the whole page scroll on narrow viewports so the composer at the
-     bottom of the canvas is always reachable. Without this, the fixed
-     100vh shell + body overflow:hidden + an inner-scrolling timeline
-     trap the composer below the fold with no way to reach it. */
+
+/* Legacy fallback for very narrow desktops (kept for continuity). */
+@media (max-width: 1100px) {
+  :root { --sessions-w: 240px; }
+}
+
+/* ---- Tier 2: Tablet-portrait (601–1024px) ------------------
+   iPad mini (768) / Air (820) / Pro 11 (834) portrait. Drop to a
+   two-column shell and turn the sessions / nodes panels into
+   slide-in drawers. The "nodes" view stays available. */
+@media (min-width: 601px) and (max-width: 1024px) {
+  .shell {
+    grid-template-columns: var(--rail-w) 1fr;
+  }
+  /* Sessions / nodes panels are hidden by default and slide in over
+     the canvas when the drawer-toggle button is pressed. */
+  .sessions,
+  .nodes-panel {
+    position: fixed;
+    top: 0;
+    left: var(--rail-w);
+    width: min(86vw, 320px);
+    height: var(--shell-h);
+    padding-left: max(0px, var(--safe-left));
+    background: var(--bg-1);
+    border-right: 1px solid var(--line);
+    transform: translateX(-110%);
+    transition: transform .22s var(--tap);
+    z-index: 90;
+    box-shadow: none;
+  }
+  .sessions.is-open,
+  .nodes-panel.is-open {
+    transform: translateX(0);
+    box-shadow: 0 8px 30px rgba(15, 15, 15, 0.18);
+  }
+  /* Even when hidden the drawer panels keep `hidden` from the view
+     switcher so they aren't focusable. */
+  .sessions[hidden],
+  .nodes-panel[hidden] { display: none !important; }
+
+  /* Canvas takes the second column in both views. */
+  .canvas--node,
+  .canvas:not(.canvas--node) { grid-column: 2; }
+
+  /* Show the hamburger trigger inside the canvas header. */
+  .drawer-toggle { display: inline-flex; }
+
+  /* Tighten gutters so prose has room without feeling cramped. */
+  .canvas__title { padding: 32px 32px 14px; }
+  .timeline      { padding: 8px 32px 48px; }
+  .composer      { padding: 14px 32px 20px; }
+  .node-detail   { padding: 8px 32px 48px; }
+  .chip-grid     { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+}
+
+/* ---- Tier 3: Mobile (≤ 600px, all orientations) -------------
+   iPhone SE → 15 Pro Max. Single column, drawer panels become
+   nearly full-screen, composer respects the Home Indicator. */
+@media (max-width: 600px) {
+  /* Let the whole page scroll so the composer is always reachable
+     when the soft keyboard appears. */
   body { overflow: auto; }
+
   .shell {
     grid-template-columns: var(--rail-w) 1fr;
     height: auto;
-    min-height: 100vh;
+    min-height: var(--shell-h);
+    padding-left: var(--safe-left);
+    padding-right: var(--safe-right);
   }
-  .sessions, .nodes-panel { display: none; }
-  .canvas__title { padding: 32px 24px 14px; }
-  .timeline      { padding: 8px 24px 48px; overflow-y: visible; }
-  .canvas--node  { grid-column: 2; }
-  .node-detail   { padding: 8px 24px 48px; }
+
+  /* Slim the rail so it doesn't eat horizontal space. */
+  :root { --rail-w: 44px; }
+  .rail { padding-top: max(12px, var(--safe-top)); }
+  .rail__btn { width: 36px; height: 36px; }
+
+  /* Sessions / nodes turn into full-height slide-in drawers. */
+  .sessions,
+  .nodes-panel {
+    position: fixed;
+    top: 0;
+    left: var(--rail-w);
+    width: min(86vw, 360px);
+    height: var(--shell-h);
+    padding-top: max(0px, var(--safe-top));
+    padding-bottom: max(0px, var(--safe-bottom));
+    background: var(--bg-1);
+    border-right: 1px solid var(--line);
+    transform: translateX(-110%);
+    transition: transform .22s var(--tap);
+    z-index: 90;
+  }
+  .sessions.is-open,
+  .nodes-panel.is-open {
+    transform: translateX(0);
+    box-shadow: 0 8px 30px rgba(15, 15, 15, 0.22);
+  }
+  .sessions[hidden],
+  .nodes-panel[hidden] { display: none !important; }
+
+  /* Canvas always occupies the second column. */
+  .canvas--node,
+  .canvas:not(.canvas--node) { grid-column: 2; }
+
+  /* Show hamburger; ensure ≥ 44px hit target. */
+  .drawer-toggle {
+    display: inline-flex;
+    width: 44px; height: 44px; min-width: 44px;
+  }
+
+  /* Compact gutters + fluid title type. */
+  .canvas__head   { padding: 8px 12px; min-height: 48px; }
+  .canvas__title  { padding: 24px 16px 12px; }
+  .timeline       { padding: 6px 16px 32px; overflow-y: visible; }
+  .canvas--node   { overflow: visible; }
+  .node-detail    { padding: 8px 16px 32px; overflow-y: visible; }
+
+  .display {
+    font-size: clamp(22px, 7vw, 32px);
+    line-height: 1.25;
+  }
+  .lede { font-size: 15px; }
+
+  /* Chat bubbles take the full available width. */
+  .turn__body {
+    max-width: 100%;
+  }
+  .turn { gap: 8px; padding: 10px 0; }
+  .prose       { font-size: 15px; }
+  .terminal,
+  .artifact    { max-width: 100%; }
+
+  /* Hide hover-only meta on touch — tools chips would clutter the row. */
+  .turn__tools { display: none; }
+  /* Pinned-on-hover affordances always visible (no hover on touch). */
+  .thread__pin,
+  .node-row__pin { opacity: 1; }
+
+  /* Composer — sticky to viewport bottom, padded for Home Indicator. */
   .canvas > .composer {
-    padding: 12px 24px 18px;
-    /* Keep the composer docked to the bottom of the viewport while the
-       page scrolls behind it. Sticky (rather than fixed) keeps it inside
-       the canvas grid so the timeline still reserves the right amount of
-       vertical space and content isn't hidden underneath it. The
-       `.canvas > .composer` selector matches the specificity of the
-       `.canvas > *` rule above that sets position: relative. */
     position: sticky;
     bottom: 0;
     z-index: 3;
+    padding: 10px 16px calc(14px + var(--safe-bottom));
     background: var(--bg);
     box-shadow: 0 -8px 16px -12px rgba(15, 15, 15, 0.18);
   }
-  .canvas__head  { padding: 10px 16px; }
-  .turn__tools   { display: none; }
-  .display       { font-size: 32px; }
+  .composer__toolbar { padding: 4px 6px; row-gap: 4px; }
+  .composer__form    { padding: 8px 10px; gap: 8px; }
+  .composer__kbd     { display: none; }
+  .composer__send    { width: 36px; height: 36px; }
+  .composer__hint    { display: none; }
+
+  /* Make rail/composer chips meet 44px touch target via padding. */
+  .composer__chip { min-height: 32px; padding: 6px 10px; }
+  .canvas__icon   { width: 36px; height: 36px; }
+
+  /* Sessions search & tabs comfortably tappable inside the drawer. */
+  .tabs__btn { padding: 8px 10px; font-size: 13px; }
+  .sessions__search { padding: 8px 10px; }
+}
+
+/* ---- Tier 4: Mobile-landscape (601–860px, touch, landscape) ----
+   iPhone landscape (Plus / Pro Max ~ 852–932 wide). Keep mobile
+   layout but shrink vertical chrome so the message area dominates,
+   and pad horizontally for the notch. */
+@media (max-width: 860px) and (orientation: landscape) and (hover: none) {
+  .shell {
+    padding-left: var(--safe-left);
+    padding-right: var(--safe-right);
+  }
+  .canvas__head  { min-height: 40px; padding: 4px 12px; }
+  .canvas__title { padding: 16px 16px 8px; }
+  .timeline      { padding: 4px 16px 20px; }
+  .canvas > .composer {
+    padding: 6px 16px calc(10px + var(--safe-bottom));
+  }
+  .display { font-size: clamp(20px, 5vw, 28px); }
 }
 
 /* ============================================================
