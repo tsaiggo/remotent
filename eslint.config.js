@@ -8,8 +8,6 @@ export default [
   {
     languageOptions: {
       ecmaVersion: 'latest',
-      // app.js is a classic IIFE-wrapped browser script, not an ES module.
-      sourceType: 'script',
       globals: {
         ...globals.browser,
       },
