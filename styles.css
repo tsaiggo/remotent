@@ -1046,8 +1046,7 @@ code   { font-family: var(--mono); font-size: 0.85em; color: var(--ink); }
 }
 .node-status__btn--primary:hover {
   color: var(--bg);
-  background: #1f1d1a;
-  border-color: #1f1d1a;
+  filter: brightness(0.92);
 }
 .node-status__pip {
   width: 6px; height: 6px;

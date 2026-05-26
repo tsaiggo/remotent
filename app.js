@@ -1029,7 +1029,7 @@
           ).join('') +
         `</select>` +
         `<input class="chip-row__name" type="text" value="${escapeHtml(t.name)}" data-bind="tools.${i}.name" placeholder="acp.tool/name" />` +
-        `<span class="chip-row__meta">${t.calls24h | 0} · 24h</span>` +
+        `<span class="chip-row__meta">${(t.calls24h || 0)} · 24h</span>` +
         `<button class="chip-row__rm" type="button" data-rm="tool" data-index="${i}" aria-label="Remove tool">×</button>` +
       `</div>`
     )).join('') || `<div class="empty-hint">No tools granted.</div>`;
@@ -1140,7 +1140,7 @@
         `</div>` +
         `<div class="stat-grid">` +
           `<div class="stat"><div class="stat__label">Context window</div><div class="stat__value">${escapeHtml(n.contextWindow)}</div></div>` +
-          `<div class="stat"><div class="stat__label">Long-term memory</div><div class="stat__value">${n.memoryItems | 0}</div><div class="stat__sub">items indexed</div></div>` +
+          `<div class="stat"><div class="stat__label">Long-term memory</div><div class="stat__value">${(n.memoryItems || 0)}</div><div class="stat__sub">items indexed</div></div>` +
         `</div>` +
       `</section>` +
 
@@ -1301,14 +1301,22 @@
   }
 
   /* Tiny dotted-path setter so we can bind nested fields like
-     `acp.sessionMode` or `tools.2.scope` directly to form inputs. */
+     `acp.sessionMode` or `tools.2.scope` directly to form inputs.
+     Guards against prototype-pollution keys so a tampered
+     `data-bind` attribute can't reach `__proto__` / `constructor` /
+     `prototype` and mutate global object behaviour. */
+  const FORBIDDEN_KEYS = { __proto__: 1, constructor: 1, prototype: 1 };
   function setByPath(obj, path, value) {
     const parts = path.split('.');
+    if (parts.some((p) => Object.prototype.hasOwnProperty.call(FORBIDDEN_KEYS, p))) return;
     let cur = obj;
     for (let i = 0; i < parts.length - 1; i++) {
       const k = parts[i];
-      if (cur[k] == null) cur[k] = (/^\d+$/.test(parts[i + 1]) ? [] : {});
+      if (!Object.prototype.hasOwnProperty.call(cur, k) || cur[k] == null) {
+        cur[k] = (/^\d+$/.test(parts[i + 1]) ? [] : {});
+      }
       cur = cur[k];
+      if (cur === null || typeof cur !== 'object') return;
     }
     cur[parts[parts.length - 1]] = value;
   }
