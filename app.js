@@ -194,6 +194,14 @@
       '</svg>',
   };
 
+  const HUMAN_AVATAR_URL = 'https://github.com/user-attachments/assets/ee226c0a-c50d-44d5-b97b-52808f1b3c85';
+  const AGENT_AVATAR = {
+    dev:      'assets/avatars/dev.png',
+    design:   'assets/avatars/design.png',
+    research: 'assets/avatars/research.png',
+    agent:    'assets/avatars/agent.png',
+  };
+
   const escapeHtml = (s) =>
     String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -201,8 +209,10 @@
   function turnHtml(turn) {
     const isHuman = turn.kind === 'human';
     const node = turn.node || '';
-    const avatarLetter = isHuman ? escapeHtml((turn.who || 'U').charAt(0).toUpperCase()) : '';
-    const avatarInner = isHuman ? avatarLetter : (SVG[node] || avatarLetter);
+    const humanAvatarImg = `<img class="turn__avatar-img" src="${HUMAN_AVATAR_URL}" alt="">`;
+    const agentAvatarUrl = AGENT_AVATAR[node] || AGENT_AVATAR.agent;
+    const agentAvatarImg = `<img class="turn__avatar-img" src="${agentAvatarUrl}" alt="">`;
+    const avatarInner = isHuman ? humanAvatarImg : agentAvatarImg;
     const avatarClass = isHuman
       ? 'turn__avatar'
       : `turn__avatar turn__avatar--${node}${turn.live ? ' is-live' : ''}`;
