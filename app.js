@@ -561,10 +561,22 @@
         'Tools: prefer repo.read before shell; gate writes behind ack.exactly_once.\n' +
         'Style: terse, mono-spaced diffs, link the failing test before the fix.',
       tools: [
-        { name: 'acp.tool/shell', scope: 'write', calls24h: 142 },
-        { name: 'repo.read',      scope: 'read',  calls24h: 318 },
-        { name: 'gh.read',        scope: 'read',  calls24h: 64  },
-        { name: 'gh.write',       scope: 'write', calls24h: 12  },
+        { name: 'acp.tool/shell', scope: 'write', calls24h: 142,
+          ttl: '24h', rate: '30/min',
+          resources: ['./services/**', '/tmp/**'],
+          ack: 'exactly-once', errorRate24h: 0.4 },
+        { name: 'repo.read',      scope: 'read',  calls24h: 318,
+          ttl: '7d',  rate: '300/min',
+          resources: ['./**'],
+          ack: 'best-effort', errorRate24h: 0.1 },
+        { name: 'gh.read',        scope: 'read',  calls24h: 64,
+          ttl: '7d',  rate: '60/min',
+          resources: ['tsaiggo/remotent'],
+          ack: 'at-least-once', errorRate24h: 0.0 },
+        { name: 'gh.write',       scope: 'write', calls24h: 12,
+          ttl: '4h',  rate: '6/min',
+          resources: ['tsaiggo/remotent#dev/*'],
+          ack: 'exactly-once', errorRate24h: 0.8 },
       ],
       mcp: [
         { name: 'github://tsaiggo/remotent', meta: 'main · read/write' },
@@ -574,6 +586,38 @@
         humanInLoop: 'ask · for writes outside services/*',
         writePaths: ['services/**', 'cmd/**', 'internal/**'],
       },
+      acp: {
+        version: '0.2',
+        capabilities: ['turn.stream', 'tool.call', 'ack.exactly_once', 'attest.ed25519', 'sub.fanout'],
+        ack: {
+          default: 'at-least-once',
+          perToolOverrides: { 'acp.tool/shell': 'exactly-once', 'gh.write': 'exactly-once' },
+        },
+        idempotencyWindow: '15m',
+        attestation: { algo: 'ed25519', keyId: 'fp:7a3c…b21', lastSigned: '12s ago' },
+        handshake:   { lastAt: '02:14:08 UTC', peerCount: 3 },
+      },
+      policy: {
+        humanInLoop: [
+          { trigger: 'write outside services/*', action: 'ask',   scope: 'repo' },
+          { trigger: 'merge to main',            action: 'block', scope: 'gh' },
+          { trigger: 'shell.exec',               action: 'log',   scope: 'all' },
+          { trigger: 'patch under services/*',   action: 'auto',  scope: 'repo' },
+        ],
+        rateLimit:   { tokensPerMin: 6000, callsPerMin: 60 },
+        concurrency: { maxInFlight: 4 },
+        retry:       { policy: 'expo', max: 3 },
+        timeout:     '30s',
+      },
+      subscriptions: [
+        { topic: 'session.turn.new',     since: '02:14 UTC', count24h: 318, qos: 'at-least-once' },
+        { topic: 'fleet.peer.handshake', since: '02:14 UTC', count24h: 12,  qos: 'best-effort' },
+        { topic: 'repo.ci.failed',       since: '02:14 UTC', count24h: 47,  qos: 'exactly-once' },
+      ],
+      outbound: [
+        { target: 'design.node',   contract: 'review.request', calls24h: 18, p50: '420ms', ack: 'at-least-once' },
+        { target: 'research.node', contract: 'lookup.cite',    calls24h: 6,  p50: '1.2s',  ack: 'best-effort' },
+      ],
     },
 
     'design.node': {
@@ -588,9 +632,18 @@
         'Mandate: enforce contrast ≥ 4.5:1 on operator surfaces, keep hairline language consistent across views.\n' +
         'Always cite the affected token (e.g. --ink-3) and propose a one-step promotion before any rewrite.',
       tools: [
-        { name: 'figma.read',      scope: 'read',  calls24h: 96 },
-        { name: 'tokens.diff',     scope: 'read',  calls24h: 41 },
-        { name: 'acp.tool/render', scope: 'write', calls24h: 18 },
+        { name: 'figma.read',      scope: 'read',  calls24h: 96,
+          ttl: '24h', rate: '60/min',
+          resources: ['team/remotent'],
+          ack: 'best-effort', errorRate24h: 0.2 },
+        { name: 'tokens.diff',     scope: 'read',  calls24h: 41,
+          ttl: '7d',  rate: '60/min',
+          resources: ['styles/tokens.css', 'tokens.json'],
+          ack: 'best-effort', errorRate24h: 0.0 },
+        { name: 'acp.tool/render', scope: 'write', calls24h: 18,
+          ttl: '1h',  rate: '6/min',
+          resources: ['./_render/**'],
+          ack: 'exactly-once', errorRate24h: 1.1 },
       ],
       mcp: [
         { name: 'figma://team/remotent', meta: 'console · read-only' },
@@ -600,6 +653,36 @@
         humanInLoop: 'ask · before any token promotion',
         writePaths: ['styles/**', 'tokens/**'],
       },
+      acp: {
+        version: '0.2',
+        capabilities: ['turn.stream', 'tool.call', 'ack.at_least_once', 'attest.ed25519'],
+        ack: {
+          default: 'at-least-once',
+          perToolOverrides: { 'acp.tool/render': 'exactly-once' },
+        },
+        idempotencyWindow: '10m',
+        attestation: { algo: 'ed25519', keyId: 'fp:9d12…ae40', lastSigned: '38s ago' },
+        handshake:   { lastAt: '02:14:08 UTC', peerCount: 3 },
+      },
+      policy: {
+        humanInLoop: [
+          { trigger: 'token promote',     action: 'ask',   scope: 'tokens' },
+          { trigger: 'breaking contrast', action: 'block', scope: 'styles' },
+          { trigger: 'figma.read',        action: 'log',   scope: 'all' },
+        ],
+        rateLimit:   { tokensPerMin: 4000, callsPerMin: 40 },
+        concurrency: { maxInFlight: 2 },
+        retry:       { policy: 'expo', max: 2 },
+        timeout:     '20s',
+      },
+      subscriptions: [
+        { topic: 'session.turn.new', since: '02:14 UTC', count24h: 96, qos: 'at-least-once' },
+        { topic: 'tokens.diff',      since: '02:14 UTC', count24h: 22, qos: 'at-least-once' },
+      ],
+      outbound: [
+        { target: 'research.node', contract: 'lookup.cite', calls24h: 3,  p50: '1.4s',  ack: 'best-effort' },
+        { target: 'dev.node',      contract: 'review.reply', calls24h: 18, p50: '380ms', ack: 'at-least-once' },
+      ],
     },
 
     'research.node': {
@@ -614,9 +697,18 @@
         'Mandate: surface 3–7 high-signal sources per query, flag contradictions, never invent citations.\n' +
         'Format: title · venue · year · one-line claim. Drop everything older than the cut-off year.',
       tools: [
-        { name: 'arxiv.search',    scope: 'read', calls24h: 211 },
-        { name: 'notion.read',     scope: 'read', calls24h: 88  },
-        { name: 'vector.query',    scope: 'read', calls24h: 502 },
+        { name: 'arxiv.search',    scope: 'read', calls24h: 211,
+          ttl: '7d',  rate: '120/min',
+          resources: ['arxiv://*'],
+          ack: 'best-effort', errorRate24h: 0.3 },
+        { name: 'notion.read',     scope: 'read', calls24h: 88,
+          ttl: '24h', rate: '60/min',
+          resources: ['notion://research-db'],
+          ack: 'best-effort', errorRate24h: 0.0 },
+        { name: 'vector.query',    scope: 'read', calls24h: 502,
+          ttl: '5m',  rate: '500/min',
+          resources: ['vector://corpus'],
+          ack: 'best-effort', errorRate24h: 0.1 },
       ],
       mcp: [
         { name: 'arxiv://2024-2025',    meta: 'CS.DC · 38k papers' },
@@ -627,6 +719,37 @@
         humanInLoop: 'auto · read-only by design',
         writePaths: [],
       },
+      acp: {
+        version: '0.2',
+        capabilities: ['turn.stream', 'tool.call', 'sub.fanout'],
+        ack: {
+          default: 'best-effort',
+          perToolOverrides: {},
+        },
+        idempotencyWindow: '5m',
+        attestation: { algo: 'ed25519', keyId: 'fp:2b08…c971', lastSigned: '7s ago' },
+        handshake:   { lastAt: '02:14:08 UTC', peerCount: 3 },
+      },
+      policy: {
+        humanInLoop: [
+          { trigger: 'cite without source', action: 'block', scope: 'all' },
+          { trigger: 'vector.query',        action: 'log',   scope: 'all' },
+          { trigger: 'arxiv.search',        action: 'auto',  scope: 'all' },
+        ],
+        rateLimit:   { tokensPerMin: 8000, callsPerMin: 120 },
+        concurrency: { maxInFlight: 6 },
+        retry:       { policy: 'expo', max: 2 },
+        timeout:     '45s',
+      },
+      subscriptions: [
+        { topic: 'session.turn.new',    since: '02:14 UTC', count24h: 211, qos: 'best-effort' },
+        { topic: 'research.query.new',  since: '02:14 UTC', count24h: 502, qos: 'at-least-once' },
+        { topic: 'corpus.refresh',      since: '02:14 UTC', count24h: 4,   qos: 'at-least-once' },
+      ],
+      outbound: [
+        { target: 'dev.node',    contract: 'cite.return', calls24h: 6, p50: '910ms', ack: 'best-effort' },
+        { target: 'design.node', contract: 'cite.return', calls24h: 3, p50: '1.1s',  ack: 'best-effort' },
+      ],
     },
 
     'editor.node': {
@@ -641,8 +764,14 @@
         'You are editor.node. Improve clarity without altering meaning.\n' +
         'Prefer Anglo-Saxon roots, cut adverbs, keep sentences under 22 words when possible.',
       tools: [
-        { name: 'notion.read',  scope: 'read',  calls24h: 12 },
-        { name: 'notion.write', scope: 'write', calls24h: 4  },
+        { name: 'notion.read',  scope: 'read',  calls24h: 12,
+          ttl: '24h', rate: '60/min',
+          resources: ['notion://drafts'],
+          ack: 'best-effort', errorRate24h: 0.0 },
+        { name: 'notion.write', scope: 'write', calls24h: 4,
+          ttl: '1h',  rate: '10/min',
+          resources: ['notion://drafts/**'],
+          ack: 'at-least-once', errorRate24h: 0.0 },
       ],
       mcp: [
         { name: 'notion://drafts', meta: 'Q3 brief · read/write' },
@@ -651,6 +780,35 @@
         humanInLoop: 'ask · on any structural rewrite',
         writePaths: ['notion://drafts/**'],
       },
+      acp: {
+        version: '0.2',
+        capabilities: ['turn.stream', 'tool.call'],
+        ack: {
+          default: 'at-most-once',
+          perToolOverrides: {},
+        },
+        idempotencyWindow: '5m',
+        attestation: { algo: 'ed25519', keyId: 'fp:4e2a…f08c', lastSigned: '4h ago' },
+        handshake:   { lastAt: '04:02 UTC', peerCount: 0 },
+      },
+      policy: {
+        humanInLoop: [
+          { trigger: 'structural rewrite', action: 'ask',   scope: 'notion' },
+          { trigger: 'fact insertion',     action: 'block', scope: 'all' },
+          { trigger: 'notion.write',       action: 'log',   scope: 'notion' },
+        ],
+        rateLimit:   { tokensPerMin: 2000, callsPerMin: 20 },
+        concurrency: { maxInFlight: 1 },
+        retry:       { policy: 'expo', max: 1 },
+        timeout:     '20s',
+      },
+      subscriptions: [
+        { topic: 'session.turn.new', since: '04:02 UTC', count24h: 0, qos: 'best-effort' },
+        { topic: 'drafts.changed',   since: '04:02 UTC', count24h: 0, qos: 'at-least-once' },
+      ],
+      outbound: [
+        { target: 'research.node', contract: 'lookup.cite', calls24h: 0, p50: '—', ack: 'best-effort' },
+      ],
     },
   };
 
@@ -886,15 +1044,38 @@
     }
 
     // Sections: Capabilities + Activity
-    const toolGrid = n.tools.map((t) => (
-      `<div class="tool-chip">` +
-        `<span class="tool-chip__name">` +
-          `<span class="tool-chip__scope tool-chip__scope--${escapeHtml(t.scope)}">${escapeHtml(t.scope)}</span>` +
-          `${escapeHtml(t.name)}` +
-        `</span>` +
-        `<span class="tool-chip__meta">${t.calls24h} · 24h</span>` +
-      `</div>`
-    )).join('') || '<div class="empty-hint">No tools granted.</div>';
+    const toolGrid = n.tools.map((t) => {
+      const acpBits = [
+        t.ack  ? `ack: ${escapeHtml(t.ack)}`             : null,
+        t.ttl  ? `ttl ${escapeHtml(t.ttl)}`              : null,
+        t.rate ? escapeHtml(t.rate)                      : null,
+        (typeof t.errorRate24h === 'number')
+          ? `err ${t.errorRate24h.toFixed(1)}%`          : null,
+      ].filter(Boolean).join(' · ');
+      const acpLine = acpBits
+        ? `<div class="tool-chip__acp">${acpBits}</div>`
+        : '';
+      const paths = (t.resources || []).length
+        ? `<div class="tool-chip__paths">` +
+            t.resources.map((p) => `<code>${escapeHtml(p)}</code>`).join('') +
+          `</div>`
+        : '';
+      const isRich = acpLine || paths;
+      const rowOrFlat = isRich
+        ? `<div class="tool-chip__row">` +
+            `<span class="tool-chip__name">` +
+              `<span class="tool-chip__scope tool-chip__scope--${escapeHtml(t.scope)}">${escapeHtml(t.scope)}</span>` +
+              `${escapeHtml(t.name)}` +
+            `</span>` +
+            `<span class="tool-chip__meta">${t.calls24h} · 24h</span>` +
+          `</div>` + acpLine + paths
+        : `<span class="tool-chip__name">` +
+            `<span class="tool-chip__scope tool-chip__scope--${escapeHtml(t.scope)}">${escapeHtml(t.scope)}</span>` +
+            `${escapeHtml(t.name)}` +
+          `</span>` +
+          `<span class="tool-chip__meta">${t.calls24h} · 24h</span>`;
+      return `<div class="tool-chip${isRich ? ' tool-chip--rich' : ''}">${rowOrFlat}</div>`;
+    }).join('') || '<div class="empty-hint">No tools granted.</div>';
 
     const mcpGrid = n.mcp.map((m) => (
       `<div class="mcp-chip">` +
@@ -946,23 +1127,138 @@
         `</div>` +
       `</div>`;
 
+    // === ACP-aware extensions ===
+    const acp = n.acp || {};
+    const att = acp.attestation || {};
+    const hs  = acp.handshake || {};
+    const pol = n.policy || {};
+    const ack = acp.ack || {};
+    const rl  = pol.rateLimit || {};
+    const cc  = pol.concurrency || {};
+    const ret = pol.retry || {};
+    const overrideCount = Object.keys(ack.perToolOverrides || {}).length;
+
+    const identityDl =
+      `<dl class="dl-stats">` +
+        `<div class="dl-stats__row"><dt>acp</dt><dd>v${escapeHtml(acp.version || '0.2')}</dd></div>` +
+        `<div class="dl-stats__row"><dt>endpoint</dt><dd><code>${escapeHtml(n.endpoint)}</code></dd></div>` +
+        `<div class="dl-stats__row"><dt>key</dt><dd>${escapeHtml(att.keyId || '—')}</dd></div>` +
+        `<div class="dl-stats__row"><dt>handshake</dt><dd>${escapeHtml(hs.lastAt || '—')} · ${hs.peerCount ?? 0} peer${hs.peerCount === 1 ? '' : 's'}</dd></div>` +
+        `<div class="dl-stats__row"><dt>last signed</dt><dd>${escapeHtml(att.lastSigned || '—')}</dd></div>` +
+      `</dl>`;
+
+    const capChips = (acp.capabilities || []).length
+      ? `<div class="cap-chips">` +
+          acp.capabilities.map((c) => `<span class="cap-chip">${escapeHtml(c)}</span>`).join('') +
+        `</div>`
+      : '';
+
+    const promptCard =
+      `<div class="prompt-card">` +
+        `<div class="prompt-card__head">` +
+          `<span class="prompt-card__title">System prompt</span>` +
+          `<button type="button" class="prompt-card__edit" aria-label="Edit system prompt">Edit</button>` +
+        `</div>` +
+        `<div class="prompt-card__shell">` +
+          `<pre class="prompt-card__body" contenteditable="false">${escapeHtml(n.systemPrompt)}</pre>` +
+          `<div class="prompt-card__fade" aria-hidden="true"></div>` +
+        `</div>` +
+      `</div>`;
+
+    const subsList = (n.subscriptions || []).length
+      ? `<ul class="sub-list">` + n.subscriptions.map((s) => (
+          `<li class="sub-row">` +
+            `<span class="sub-row__topic">${escapeHtml(s.topic)}</span>` +
+            `<span class="sub-row__count">${s.count24h}/24h</span>` +
+            `<span class="sub-row__since">since ${escapeHtml(s.since)}</span>` +
+            `<span class="sub-row__qos">${escapeHtml(s.qos)}</span>` +
+          `</li>`
+        )).join('') + `</ul>`
+      : '<div class="empty-hint">No subscriptions.</div>';
+
+    const outList = (n.outbound || []).length
+      ? `<ul class="out-list">` + n.outbound.map((o) => {
+          const known = !!NODES[o.target];
+          const target = known
+            ? `<a href="#" class="out-row__target" data-jump-node="${escapeHtml(o.target)}">${escapeHtml(o.target)}</a>`
+            : `<span class="out-row__target out-row__target--unknown">${escapeHtml(o.target)}</span>`;
+          return (
+            `<li class="out-row">` +
+              `<span class="out-row__arrow" aria-hidden="true">` +
+                `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg>` +
+              `</span>` +
+              target +
+              `<span class="out-row__contract">${escapeHtml(o.contract)}</span>` +
+              `<span class="out-row__calls">${o.calls24h} calls</span>` +
+              `<span class="out-row__p50">p50 ${escapeHtml(o.p50)}</span>` +
+              `<span class="out-row__qos">${escapeHtml(o.ack)}</span>` +
+            `</li>`
+          );
+        }).join('') + `</ul>`
+      : '<div class="empty-hint">No outbound contracts.</div>';
+
+    const runtimeRow = (label, val) =>
+      `<div class="acp-runtime__row">` +
+        `<span class="acp-runtime__label">${escapeHtml(label)}</span>` +
+        `<span class="acp-runtime__value">${val}</span>` +
+      `</div>`;
+
+    const ackDefaultCell = ack.default
+      ? `${escapeHtml(ack.default)}` +
+        (overrideCount ? ` <span class="acp-runtime__hint">· ${overrideCount} override${overrideCount === 1 ? '' : 's'}</span>` : '')
+      : '—';
+
+    const acpRuntime =
+      `<div class="acp-runtime">` +
+        runtimeRow('Ack default',    ackDefaultCell) +
+        runtimeRow('Idempotency',    `${escapeHtml(acp.idempotencyWindow || '—')} window`) +
+        runtimeRow('Retry',          `${escapeHtml(ret.policy || '—')} · max ${ret.max ?? '—'}`) +
+        runtimeRow('Timeout',        `${escapeHtml(pol.timeout || '—')}`) +
+        runtimeRow('Rate limit',     `${rl.tokensPerMin ?? '—'} tok/min · ${rl.callsPerMin ?? '—'} calls/min`) +
+        runtimeRow('Concurrency',    `max ${cc.maxInFlight ?? '—'} in-flight`) +
+        runtimeRow('Attestation',    `${escapeHtml(att.algo || '—')} · ${escapeHtml(att.keyId || '—')}`) +
+        runtimeRow('Last handshake', `${escapeHtml(hs.lastAt || '—')} · ${hs.peerCount ?? 0} peer${hs.peerCount === 1 ? '' : 's'}`) +
+      `</div>`;
+
+    const policyRules = pol.humanInLoop || [];
+    const allowedAct = { ask: 1, block: 1, log: 1, auto: 1 };
+    const policyTable = policyRules.length
+      ? `<div class="policy-table" role="table">` +
+          `<div class="policy-table__head" role="row">` +
+            `<span role="columnheader">trigger</span>` +
+            `<span role="columnheader">action</span>` +
+            `<span role="columnheader">scope</span>` +
+          `</div>` +
+          policyRules.map((r) => {
+            const act = allowedAct[r.action] ? r.action : 'log';
+            return (
+              `<div class="policy-table__row" role="row">` +
+                `<span class="policy-table__trigger">${escapeHtml(r.trigger)}</span>` +
+                `<span><span class="policy-chip policy-chip--${escapeHtml(act)}">${escapeHtml(r.action)}</span></span>` +
+                `<span class="policy-table__scope">${escapeHtml(r.scope)}</span>` +
+              `</div>`
+            );
+          }).join('') +
+        `</div>`
+      : '<div class="empty-hint">No human-in-loop rules — fully autonomous.</div>';
+
     nodeEls.detail.innerHTML =
+      // ───────── IDENTITY ─────────
+      `<span class="band-label">Identity</span>` +
       `<section class="node-section">` +
         `<div class="node-section__head">` +
-          `<h3 class="node-section__title">Tools · ACP grants</h3>` +
-          `<span class="node-section__hint">${n.tools.length} authorized</span>` +
+          `<h3 class="node-section__title">ACP coordinates</h3>` +
+          `<span class="node-section__hint">${(acp.capabilities || []).length} capabilit${(acp.capabilities || []).length === 1 ? 'y' : 'ies'}</span>` +
         `</div>` +
-        `<div class="chip-grid">${toolGrid}</div>` +
+        identityDl +
+        capChips +
       `</section>` +
 
+      // ───────── BRAIN ─────────
+      `<span class="band-label">Brain</span>` +
       `<section class="node-section">` +
-        `<div class="node-section__head">` +
-          `<h3 class="node-section__title">Resources · MCP &amp; data</h3>` +
-          `<span class="node-section__hint">${n.mcp.length} mounted</span>` +
-        `</div>` +
-        `<div class="chip-grid">${mcpGrid}</div>` +
+        promptCard +
       `</section>` +
-
       `<section class="node-section">` +
         `<div class="node-section__head">` +
           `<h3 class="node-section__title">Memory &amp; context</h3>` +
@@ -971,22 +1267,63 @@
           `<div class="stat"><div class="stat__label">Context window</div><div class="stat__value">${escapeHtml(n.contextWindow)}</div></div>` +
           `<div class="stat"><div class="stat__label">Long-term memory</div><div class="stat__value">${n.memoryItems}</div><div class="stat__sub">items indexed</div></div>` +
         `</div>` +
-        `<details class="node-prompt">` +
-          `<summary>System prompt · preview</summary>` +
-          `<div class="node-prompt__body">${escapeHtml(n.systemPrompt)}</div>` +
-        `</details>` +
       `</section>` +
 
+      // ───────── CAPABILITIES ─────────
+      `<span class="band-label">Capabilities</span>` +
       `<section class="node-section">` +
         `<div class="node-section__head">` +
-          `<h3 class="node-section__title">Permissions</h3>` +
+          `<h3 class="node-section__title">Tools · ACP grants</h3>` +
+          `<span class="node-section__hint">${n.tools.length} authorized</span>` +
         `</div>` +
-        `<div class="stat-grid">` +
-          `<div class="stat"><div class="stat__label">Human-in-loop</div><div class="stat__value" style="font-size:13px">${escapeHtml(n.permissions.humanInLoop)}</div></div>` +
-          `<div class="stat"><div class="stat__label">Write paths</div><div class="stat__sub" style="margin-top:6px">${writeList}</div></div>` +
+        `<div class="chip-grid">${toolGrid}</div>` +
+      `</section>` +
+      `<section class="node-section">` +
+        `<div class="node-section__head">` +
+          `<h3 class="node-section__title">Resources · MCP &amp; data</h3>` +
+          `<span class="node-section__hint">${n.mcp.length} mounted</span>` +
         `</div>` +
+        `<div class="chip-grid">${mcpGrid}</div>` +
+      `</section>` +
+      `<section class="node-section">` +
+        `<div class="node-section__head">` +
+          `<h3 class="node-section__title">Subscriptions</h3>` +
+          `<span class="node-section__hint">${(n.subscriptions || []).length} topic${(n.subscriptions || []).length === 1 ? '' : 's'}</span>` +
+        `</div>` +
+        subsList +
+      `</section>` +
+      `<section class="node-section">` +
+        `<div class="node-section__head">` +
+          `<h3 class="node-section__title">Outbound contracts</h3>` +
+          `<span class="node-section__hint">${(n.outbound || []).length} peer${(n.outbound || []).length === 1 ? '' : 's'}</span>` +
+        `</div>` +
+        outList +
       `</section>` +
 
+      // ───────── POLICY ─────────
+      `<span class="band-label">Policy</span>` +
+      `<section class="node-section">` +
+        `<div class="node-section__head">` +
+          `<h3 class="node-section__title">ACP runtime</h3>` +
+        `</div>` +
+        acpRuntime +
+      `</section>` +
+      `<section class="node-section">` +
+        `<div class="node-section__head">` +
+          `<h3 class="node-section__title">Human-in-loop · rules</h3>` +
+          `<span class="node-section__hint">${policyRules.length} rule${policyRules.length === 1 ? '' : 's'}</span>` +
+        `</div>` +
+        policyTable +
+      `</section>` +
+      `<section class="node-section">` +
+        `<div class="node-section__head">` +
+          `<h3 class="node-section__title">Write paths</h3>` +
+        `</div>` +
+        `<div class="write-paths">${writeList}</div>` +
+      `</section>` +
+
+      // ───────── ACTIVITY ─────────
+      `<span class="band-label">Activity</span>` +
       `<section class="node-section">` +
         `<div class="node-section__head">` +
           `<h3 class="node-section__title">Sessions · appearances</h3>` +
@@ -994,14 +1331,12 @@
         `</div>` +
         sessionList +
       `</section>` +
-
       `<section class="node-section">` +
         `<div class="node-section__head">` +
           `<h3 class="node-section__title">Recent turns</h3>` +
         `</div>` +
         turnsList +
       `</section>` +
-
       `<section class="node-section">` +
         `<div class="node-section__head">` +
           `<h3 class="node-section__title">Telemetry · last 60 min</h3>` +
@@ -1017,6 +1352,15 @@
         switchView('hub');
         const row = document.querySelector(`.thread[data-session-id="${sid}"]`);
         if (row) row.click();
+      });
+    });
+
+    // Wire node jumps (outbound contracts → peer node detail)
+    nodeEls.detail.querySelectorAll('[data-jump-node]').forEach((a) => {
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        const nid = a.dataset.jumpNode;
+        if (NODES[nid]) renderNodeDetail(nid);
       });
     });
   }
@@ -1114,6 +1458,25 @@
         systemPrompt: 'You are a new Remotent agent. Awaiting persona.',
         tools: [], mcp: [],
         permissions: { humanInLoop: 'ask · everywhere by default', writePaths: [] },
+        acp: {
+          version: '0.2',
+          capabilities: ['turn.stream'],
+          ack: { default: 'at-most-once', perToolOverrides: {} },
+          idempotencyWindow: '5m',
+          attestation: { algo: 'ed25519', keyId: 'fp:pending', lastSigned: '—' },
+          handshake:   { lastAt: '—', peerCount: 0 },
+        },
+        policy: {
+          humanInLoop: [
+            { trigger: '*', action: 'ask', scope: 'all' },
+          ],
+          rateLimit:   { tokensPerMin: 1000, callsPerMin: 10 },
+          concurrency: { maxInFlight: 1 },
+          retry:       { policy: 'expo', max: 1 },
+          timeout:     '30s',
+        },
+        subscriptions: [],
+        outbound: [],
       };
       currentNodeId = id;
       refreshFleetMeta();
