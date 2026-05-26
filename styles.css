@@ -1361,11 +1361,6 @@ body.is-drawer-open { overflow: hidden; }
   .chip-grid     { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 }
 
-/* Legacy fallback for very narrow desktops (kept for continuity). */
-@media (max-width: 1100px) {
-  :root { --sessions-w: 240px; }
-}
-
 /* ---- Tier 2: Tablet-portrait (601–1024px) ------------------
    iPad mini (768) / Air (820) / Pro 11 (834) portrait. Drop to a
    two-column shell and turn the sessions / nodes panels into
@@ -1523,11 +1518,14 @@ body.is-drawer-open { overflow: hidden; }
   .sessions__search { padding: 8px 10px; }
 }
 
-/* ---- Tier 4: Mobile-landscape (601–860px, touch, landscape) ----
-   iPhone landscape (Plus / Pro Max ~ 852–932 wide). Keep mobile
-   layout but shrink vertical chrome so the message area dominates,
-   and pad horizontally for the notch. */
-@media (max-width: 860px) and (orientation: landscape) and (hover: none) {
+/* ---- Tier 4: Mobile-landscape (≤ 932px, touch, landscape) ----
+   iPhone landscape. The Mobile (≤600px) rules above already cover
+   smaller phones in portrait, but landscape iPhones range from
+   ~667px (SE) up to 932px (15 Pro Max), all with touch pointers.
+   This block layers extra trims on top of whichever Mobile or
+   Tablet-Portrait tier matched first, shrinking vertical chrome
+   so the message area dominates and padding for the notch. */
+@media (max-width: 932px) and (orientation: landscape) and (hover: none) {
   .shell {
     padding-left: var(--safe-left);
     padding-right: var(--safe-right);

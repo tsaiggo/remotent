@@ -1199,6 +1199,11 @@
     const toggles = document.querySelectorAll('.drawer-toggle');
     if (!scrim || toggles.length === 0) return;
 
+    // Keep in sync with the `.sessions / .nodes-panel { transition }`
+    // duration in styles.css (currently `.22s`). If you change that,
+    // change this too.
+    const DRAWER_TRANSITION_MS = 220;
+
     function getPanel(target) {
       return target === 'nodes'
         ? document.getElementById('nodesPanel')
@@ -1230,7 +1235,7 @@
       // Hide the scrim element after the fade-out so it doesn't catch taps.
       setTimeout(() => {
         if (!scrim.classList.contains('is-open')) scrim.hidden = true;
-      }, 220);
+      }, DRAWER_TRANSITION_MS);
     }
 
     toggles.forEach((btn) => {
