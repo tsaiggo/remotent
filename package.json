@@ -1,0 +1,42 @@
+{
+  "name": "remotent",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Remotent — a cyber-minimalist control surface for orchestrating multi-agent ACP sessions.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "simple-git-hooks || true"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "bunx lint-staged"
+  },
+  "lint-staged": {
+    "*.{js,mjs,cjs,ts,tsx,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{css,html,json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^9.1.0",
+    "globals": "^15.14.0",
+    "lint-staged": "^15.3.0",
+    "prettier": "^3.4.2",
+    "simple-git-hooks": "^2.11.1",
+    "vite": "^7.0.0"
+  },
+  "engines": {
+    "bun": ">=1.3"
+  }
+}

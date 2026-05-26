@@ -1,0 +1,19 @@
+# Build & deps
+node_modules/
+dist/
+.vite/
+
+# Generated lockfiles
+bun.lock
+bun.lockb
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Assets (binary / external)
+assets/
+
+# Existing source (formatted opportunistically as it's refactored in later PRs)
+app.js
+styles.css
+index.html
