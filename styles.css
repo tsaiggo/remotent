@@ -1039,6 +1039,24 @@ code   { font-family: var(--mono); font-size: 0.85em; color: var(--ink); }
 }
 .node-status__btn:hover { background: var(--hover); color: var(--ink); border-color: var(--line-hi); }
 .node-status__btn--danger:hover { color: var(--error); border-color: rgba(224, 62, 62, 0.4); }
+.node-status__btn--primary {
+  color: var(--bg);
+  background: var(--ink);
+  border-color: var(--ink);
+}
+.node-status__btn--primary:hover {
+  color: var(--bg);
+  background: #1f1d1a;
+  border-color: #1f1d1a;
+}
+.node-status__pip {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--orange-ink);
+  box-shadow: 0 0 0 3px var(--orange-soft);
+  display: inline-block;
+  margin-left: 4px;
+}
 
 .node-meta {
   list-style: none; margin: 14px 0 0; padding: 0;
@@ -1398,4 +1416,196 @@ code   { font-family: var(--mono); font-size: 0.85em; color: var(--ink); }
   /* Scrollbar thumbs blend with panels */
   .sessions::-webkit-scrollbar-thumb { border-color: var(--bg-1); }
   .timeline::-webkit-scrollbar-thumb { border-color: var(--bg); }
+}
+
+/* ============================================================
+   Node detail — tabs, form fields, removable chip rows
+   The "agent configuration page" inside the Node Overview.
+   ============================================================ */
+
+/* Tab strip (Configure / Activity) sits flush at the top of the
+   scrollable detail body. Mirrors the visual weight of the
+   sessions filter tabs but stays anchored within node-detail. */
+.node-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 4px 0 10px;
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 2;
+  margin-bottom: 4px;
+}
+.node-tabs__btn {
+  padding: 6px 10px;
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink-3);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background .12s var(--tap), color .12s var(--tap);
+}
+.node-tabs__btn:hover { color: var(--ink-2); background: var(--hover); }
+.node-tabs__btn.is-active {
+  color: var(--ink);
+  background: var(--bg-2);
+}
+.node-tabs__panel { padding-top: 4px; }
+
+/* ---- Form fields ---------------------------------------- */
+.nf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px 16px;
+}
+.nf-grid--acp {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+.nf {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.nf__label {
+  font-family: var(--sans);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.nf__input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: border-color .12s var(--tap), background .12s var(--tap);
+}
+.nf__input:hover  { border-color: var(--line-hi); }
+.nf__input:focus  { border-color: var(--ink-3); background: var(--bg); }
+.nf__input--ta    { font-family: var(--sans); resize: vertical; line-height: 1.5; }
+select.nf__input  { appearance: none; cursor: pointer; background-image: linear-gradient(45deg, transparent 50%, var(--ink-3) 50%), linear-gradient(135deg, var(--ink-3) 50%, transparent 50%); background-position: calc(100% - 14px) 50%, calc(100% - 9px) 50%; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; padding-right: 24px; }
+
+/* The system prompt is the agent's most-edited surface — give it a
+   full-bleed editor instead of the old collapsed <details>. */
+.node-prompt__editor {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  outline: none;
+  resize: vertical;
+  min-height: 140px;
+  transition: border-color .12s var(--tap), background .12s var(--tap);
+}
+.node-prompt__editor:hover  { border-color: var(--line-hi); }
+.node-prompt__editor:focus  { border-color: var(--ink-3); background: var(--bg); }
+
+/* ---- Removable chip rows (tools, MCP mounts, write paths) ---- */
+.chip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+.chip-row {
+  display: grid;
+  grid-template-columns: 84px 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px 4px 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+}
+.chip-row[data-row="mcp"]       { grid-template-columns: 1.4fr 1fr auto; }
+.chip-row[data-row="writePath"] { grid-template-columns: 1fr auto; padding: 4px; }
+.chip-row:hover { border-color: var(--line-hi); }
+.chip-row__scope {
+  appearance: none;
+  padding: 3px 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-2);
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-align: center;
+}
+.chip-row__name, .chip-row__meta-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  outline: none;
+  min-width: 0;
+}
+.chip-row__name:hover, .chip-row__meta-input:hover {
+  border-color: var(--line);
+  background: var(--bg-1);
+}
+.chip-row__name:focus, .chip-row__meta-input:focus {
+  border-color: var(--ink-3);
+  background: var(--bg);
+}
+.chip-row__meta {
+  font-family: var(--sans);
+  font-size: 11px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.chip-row__rm {
+  width: 22px; height: 22px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1;
+  color: var(--ink-3);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background .12s var(--tap), color .12s var(--tap);
+}
+.chip-row__rm:hover { color: var(--error); background: var(--red-soft); }
+
+.chip-add {
+  margin-top: 8px;
+  padding: 5px 10px;
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--ink-2);
+  background: transparent;
+  border: 1px dashed var(--line-hi);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background .12s var(--tap), color .12s var(--tap), border-color .12s var(--tap);
+}
+.chip-add:hover {
+  color: var(--ink);
+  background: var(--hover);
+  border-style: solid;
+  border-color: var(--ink-3);
 }

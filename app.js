@@ -654,6 +654,46 @@
     },
   };
 
+  /* ---------- ACP protocol defaults ----------
+     The product is built on ACP (Agent Coordination Protocol); every
+     node carries a per-instance protocol contract. Defaults below are
+     applied to any node missing an `acp` block, then per-node
+     overrides tune the contract for each agent's risk profile. */
+  const ACP_DEFAULTS = {
+    protocol:     'ACP v0.2',
+    transport:    'wss',
+    sessionMode:  'streaming',     // 'request' | 'streaming' | 'duplex'
+    ackMode:      'at-least-once', // 'at-most-once' | 'at-least-once' | 'exactly-once'
+    maxInflight:  8,
+    heartbeatSec: 15,
+    schema:       'acp.msg/2025-03',
+    auth:         'mTLS',          // 'mTLS' | 'oauth' | 'token' | 'none'
+  };
+  const ACP_OVERRIDES = {
+    'dev.node':      { ackMode: 'exactly-once', maxInflight: 4 },
+    'design.node':   { sessionMode: 'request',  ackMode: 'at-least-once', maxInflight: 6 },
+    'research.node': { sessionMode: 'streaming', ackMode: 'at-most-once', maxInflight: 16, auth: 'token' },
+    'editor.node':   { sessionMode: 'request',  ackMode: 'at-least-once', maxInflight: 4 },
+  };
+  Object.keys(NODES).forEach((k) => {
+    NODES[k].acp = Object.assign({}, ACP_DEFAULTS, ACP_OVERRIDES[k] || {});
+  });
+
+  const ACP_OPTIONS = {
+    transport:   ['wss', 'ws', 'grpc', 'http2'],
+    sessionMode: ['request', 'streaming', 'duplex'],
+    ackMode:     ['at-most-once', 'at-least-once', 'exactly-once'],
+    auth:        ['mTLS', 'oauth', 'token', 'none'],
+  };
+  const HIL_OPTIONS = [
+    'auto · read-only by design',
+    'ask · for writes outside services/*',
+    'ask · before any token promotion',
+    'ask · on any structural rewrite',
+    'ask · everywhere by default',
+    'require · every write',
+  ];
+
   /* Aggregate session-level info into a per-node view: live in any
      session? which sessions referenced it? recent turns? */
   function nodeAggregates(nodeName) {
@@ -836,76 +876,223 @@
     );
   }
 
-  function renderNodeDetail(name) {
-    if (!NODES[name]) return;
-    currentNodeId = name;
+  /* ============================================================
+     Node detail (a.k.a. the agent configuration page)
+     ----------------------------------------------------------------
+     The right column of the Nodes view. Split into two tabs:
+       · Configure — Identity, ACP, System prompt, Tools, MCP,
+                     Permissions. Fully editable with a draft/Save
+                     model so users can preview a change before
+                     committing.
+       · Activity  — Memory, Sessions, Recent turns, Telemetry.
+     A per-node draft mirrors NODES[currentNodeId]; any edit flips
+     `nodeDirty`, which surfaces a pip + Save/Revert buttons in the
+     status bar. Save commits the draft into NODES; Revert restores
+     it from the canonical record.
+     ============================================================ */
+
+  function deepCloneNode(n) {
+    return JSON.parse(JSON.stringify(n));
+  }
+
+  let nodeDraft = null;
+  let nodeDirty = false;
+  let currentNodeTab = 'configure';
+
+  function markDirty() {
+    nodeDirty = true;
+    renderNodeStatusBar();
+  }
+
+  function renderNodeStatusBar() {
+    if (!nodeEls.statusBar || !currentNodeId) return;
+    const n = nodeDraft || NODES[currentNodeId];
+    if (!n) return;
+    const status = nodeStatus(currentNodeId);
+    const pulseClass = `node node--${n.kind}`;
+    const pulse = status === 'live'
+      ? `<span class="${pulseClass}"><span class="node__pulse"></span>${escapeHtml(status)}</span>`
+      : `<span class="${pulseClass}">${escapeHtml(status)}</span>`;
+    const pauseLabel = n.paused ? 'Resume' : 'Pause';
+    const dirtyPip = nodeDirty
+      ? `<span class="node-status__pip" title="Unsaved changes" aria-label="Unsaved changes"></span>`
+      : '';
+    const saveBtns = nodeDirty
+      ? `<button class="node-status__btn node-status__btn--primary" data-act="save" type="button">Save</button>` +
+        `<button class="node-status__btn" data-act="revert" type="button">Revert</button>` +
+        `<span class="node-status__sep" aria-hidden="true"></span>`
+      : '';
+    nodeEls.statusBar.innerHTML =
+      `<span class="node-status">${pulse}` +
+        `<span class="node-status__endpoint">${escapeHtml(n.endpoint)}</span>` +
+        dirtyPip +
+      `</span>` +
+      `<span class="node-status__sep" aria-hidden="true"></span>` +
+      saveBtns +
+      `<button class="node-status__btn" data-act="toggle-pause" type="button">${pauseLabel}</button>` +
+      `<button class="node-status__btn" data-act="restart" type="button">Restart</button>` +
+      `<button class="node-status__btn" data-act="clone" type="button">Clone</button>` +
+      `<button class="node-status__btn node-status__btn--danger" data-act="archive" type="button">Archive</button>`;
+    nodeEls.statusBar.querySelectorAll('button[data-act]').forEach((b) => {
+      b.addEventListener('click', () => handleNodeAction(currentNodeId, b.dataset.act));
+    });
+  }
+
+  /* ---------- Configure tab: form sections ---------- */
+
+  function fieldHtml(label, name, value, opts) {
+    opts = opts || {};
+    const t = opts.type || 'text';
+    const id = `nf-${name}`;
+    const attrs = [
+      `id="${id}"`,
+      `data-bind="${name}"`,
+      opts.min != null ? `min="${opts.min}"` : '',
+      opts.placeholder ? `placeholder="${escapeHtml(opts.placeholder)}"` : '',
+    ].filter(Boolean).join(' ');
+    const ctrl = t === 'textarea'
+      ? `<textarea class="nf__input nf__input--ta" ${attrs} rows="${opts.rows || 3}">${escapeHtml(value || '')}</textarea>`
+      : t === 'select'
+        ? `<select class="nf__input" ${attrs}>${
+            (opts.options || []).map((o) =>
+              `<option value="${escapeHtml(o)}"${o === value ? ' selected' : ''}>${escapeHtml(o)}</option>`
+            ).join('')
+          }</select>`
+        : `<input class="nf__input" type="${t}" ${attrs} value="${escapeHtml(String(value == null ? '' : value))}" />`;
+    return (
+      `<label class="nf" for="${id}">` +
+        `<span class="nf__label">${escapeHtml(label)}</span>` +
+        ctrl +
+      `</label>`
+    );
+  }
+
+  function identitySectionHtml(n) {
+    return (
+      `<section class="node-section">` +
+        `<div class="node-section__head">` +
+          `<h3 class="node-section__title">Identity</h3>` +
+          `<span class="node-section__hint">Who this agent is</span>` +
+        `</div>` +
+        `<div class="nf-grid">` +
+          fieldHtml('Persona', 'persona', n.persona, { placeholder: 'Short tagline' }) +
+          fieldHtml('Model', 'model', n.model, { placeholder: 'e.g. gpt-codex' }) +
+          fieldHtml('Owner', 'owner', n.owner) +
+          fieldHtml('Endpoint', 'endpoint', n.endpoint, { placeholder: 'acp://fleet.local/<id>' }) +
+          fieldHtml('Context window', 'contextWindow', n.contextWindow, { placeholder: '128k tokens' }) +
+        `</div>` +
+        fieldHtml('Description', 'lede', stripTags(n.lede), { type: 'textarea', rows: 2, placeholder: 'One-paragraph summary shown in the header' }) +
+      `</section>`
+    );
+  }
+
+  function acpSectionHtml(n) {
+    const acp = n.acp || ACP_DEFAULTS;
+    return (
+      `<section class="node-section">` +
+        `<div class="node-section__head">` +
+          `<h3 class="node-section__title">ACP · Protocol</h3>` +
+          `<span class="node-section__hint">${escapeHtml(acp.protocol)} · ${escapeHtml(acp.sessionMode)} · ${escapeHtml(acp.ackMode)}</span>` +
+        `</div>` +
+        `<div class="nf-grid nf-grid--acp">` +
+          fieldHtml('Protocol',       'acp.protocol',     acp.protocol) +
+          fieldHtml('Transport',      'acp.transport',    acp.transport,   { type: 'select', options: ACP_OPTIONS.transport }) +
+          fieldHtml('Session mode',   'acp.sessionMode',  acp.sessionMode, { type: 'select', options: ACP_OPTIONS.sessionMode }) +
+          fieldHtml('Ack semantics',  'acp.ackMode',      acp.ackMode,     { type: 'select', options: ACP_OPTIONS.ackMode }) +
+          fieldHtml('Max in-flight',  'acp.maxInflight',  acp.maxInflight, { type: 'number', min: 1 }) +
+          fieldHtml('Heartbeat (s)',  'acp.heartbeatSec', acp.heartbeatSec,{ type: 'number', min: 1 }) +
+          fieldHtml('Message schema', 'acp.schema',       acp.schema) +
+          fieldHtml('Auth',           'acp.auth',         acp.auth,        { type: 'select', options: ACP_OPTIONS.auth }) +
+        `</div>` +
+      `</section>`
+    );
+  }
+
+  function promptSectionHtml(n) {
+    return (
+      `<section class="node-section">` +
+        `<div class="node-section__head">` +
+          `<h3 class="node-section__title">System prompt</h3>` +
+          `<span class="node-section__hint">${(n.systemPrompt || '').length} chars</span>` +
+        `</div>` +
+        `<textarea class="node-prompt__editor" data-bind="systemPrompt" rows="8" placeholder="Write the persona, mandate, and constraints for this agent…">${escapeHtml(n.systemPrompt || '')}</textarea>` +
+      `</section>`
+    );
+  }
+
+  function toolsSectionHtml(n) {
+    const rows = (n.tools || []).map((t, i) => (
+      `<div class="chip-row" data-row="tool" data-index="${i}">` +
+        `<select class="chip-row__scope" data-bind="tools.${i}.scope">` +
+          ['read', 'write'].map((s) =>
+            `<option value="${s}"${s === t.scope ? ' selected' : ''}>${s}</option>`
+          ).join('') +
+        `</select>` +
+        `<input class="chip-row__name" type="text" value="${escapeHtml(t.name)}" data-bind="tools.${i}.name" placeholder="acp.tool/name" />` +
+        `<span class="chip-row__meta">${t.calls24h | 0} · 24h</span>` +
+        `<button class="chip-row__rm" type="button" data-rm="tool" data-index="${i}" aria-label="Remove tool">×</button>` +
+      `</div>`
+    )).join('') || `<div class="empty-hint">No tools granted.</div>`;
+    return (
+      `<section class="node-section" id="sec-tools">` +
+        `<div class="node-section__head">` +
+          `<h3 class="node-section__title">Tools · ACP grants</h3>` +
+          `<span class="node-section__hint">${(n.tools || []).length} authorized</span>` +
+        `</div>` +
+        `<div class="chip-list">${rows}</div>` +
+        `<button class="chip-add" type="button" data-add="tool">+ Grant tool</button>` +
+      `</section>`
+    );
+  }
+
+  function mcpSectionHtml(n) {
+    const rows = (n.mcp || []).map((m, i) => (
+      `<div class="chip-row" data-row="mcp" data-index="${i}">` +
+        `<input class="chip-row__name" type="text" value="${escapeHtml(m.name)}" data-bind="mcp.${i}.name" placeholder="scheme://resource" />` +
+        `<input class="chip-row__meta-input" type="text" value="${escapeHtml(m.meta)}" data-bind="mcp.${i}.meta" placeholder="scope · notes" />` +
+        `<button class="chip-row__rm" type="button" data-rm="mcp" data-index="${i}" aria-label="Remove resource">×</button>` +
+      `</div>`
+    )).join('') || `<div class="empty-hint">No external resources mounted.</div>`;
+    return (
+      `<section class="node-section" id="sec-mcp">` +
+        `<div class="node-section__head">` +
+          `<h3 class="node-section__title">Resources · MCP &amp; data</h3>` +
+          `<span class="node-section__hint">${(n.mcp || []).length} mounted</span>` +
+        `</div>` +
+        `<div class="chip-list">${rows}</div>` +
+        `<button class="chip-add" type="button" data-add="mcp">+ Mount resource</button>` +
+      `</section>`
+    );
+  }
+
+  function permissionsSectionHtml(n) {
+    const paths = (n.permissions && n.permissions.writePaths) || [];
+    const pathRows = paths.map((p, i) => (
+      `<div class="chip-row chip-row--path" data-row="writePath" data-index="${i}">` +
+        `<input class="chip-row__name" type="text" value="${escapeHtml(p)}" data-bind="permissions.writePaths.${i}" placeholder="services/**" />` +
+        `<button class="chip-row__rm" type="button" data-rm="writePath" data-index="${i}" aria-label="Remove path">×</button>` +
+      `</div>`
+    )).join('') || `<div class="empty-hint">Read-only — no write paths granted.</div>`;
+    return (
+      `<section class="node-section" id="sec-perms">` +
+        `<div class="node-section__head">` +
+          `<h3 class="node-section__title">Permissions</h3>` +
+        `</div>` +
+        `<div class="nf-grid">` +
+          fieldHtml('Human-in-loop', 'permissions.humanInLoop', n.permissions.humanInLoop, { type: 'select', options: HIL_OPTIONS }) +
+        `</div>` +
+        `<div class="nf__label" style="margin-top:14px">Write paths</div>` +
+        `<div class="chip-list">${pathRows}</div>` +
+        `<button class="chip-add" type="button" data-add="writePath">+ Add path</button>` +
+      `</section>`
+    );
+  }
+
+  /* ---------- Activity tab: read-only runtime data ---------- */
+
+  function activityTabHtml(name) {
     const n = NODES[name];
     const agg = nodeAggregates(name);
-    const status = nodeStatus(name);
-
-    document.querySelectorAll('.node-row').forEach((r) => {
-      r.classList.toggle('is-active', r.dataset.nodeId === name);
-    });
-
-    if (nodeEls.crumb) nodeEls.crumb.textContent = n.name;
-    if (nodeEls.titleSerif) nodeEls.titleSerif.textContent = n.name.replace(/\.node$/, '');
-    if (nodeEls.titleSans)  nodeEls.titleSans.textContent  = '.node';
-    if (nodeEls.kicker) {
-      const label = status === 'live' ? 'Streaming' : status === 'paused' ? 'Paused' : status === 'error' ? 'Error' : 'Idle';
-      nodeEls.kicker.innerHTML = `${escapeHtml(n.persona)} <span class="kicker__dot"></span> ${label}`;
-    }
-    if (nodeEls.lede) nodeEls.lede.innerHTML = n.lede;
-
-    // Status bar — pulse, endpoint, action buttons
-    if (nodeEls.statusBar) {
-      const pulseClass = `node node--${n.kind}`;
-      const pulse = status === 'live'
-        ? `<span class="${pulseClass}"><span class="node__pulse"></span>${escapeHtml(status)}</span>`
-        : `<span class="${pulseClass}">${escapeHtml(status)}</span>`;
-      const pauseLabel = n.paused ? 'Resume' : 'Pause';
-      nodeEls.statusBar.innerHTML =
-        `<span class="node-status">${pulse}` +
-          `<span class="node-status__endpoint">${escapeHtml(n.endpoint)}</span>` +
-        `</span>` +
-        `<span class="node-status__sep" aria-hidden="true"></span>` +
-        `<button class="node-status__btn" data-act="toggle-pause" type="button">${pauseLabel}</button>` +
-        `<button class="node-status__btn" data-act="restart" type="button">Restart</button>` +
-        `<button class="node-status__btn" data-act="clone" type="button">Clone</button>` +
-        `<button class="node-status__btn node-status__btn--danger" data-act="archive" type="button">Archive</button>`;
-      nodeEls.statusBar.querySelectorAll('button[data-act]').forEach((b) => {
-        b.addEventListener('click', () => handleNodeAction(name, b.dataset.act));
-      });
-    }
-
-    if (nodeEls.meta) {
-      nodeEls.meta.innerHTML =
-        `<li>model · <b>${escapeHtml(n.model)}</b></li>` +
-        `<li>runtime · <b>ACP v0.2</b></li>` +
-        `<li>created · <b>${escapeHtml(n.createdAt)}</b></li>` +
-        `<li>owner · <b>${escapeHtml(n.owner)}</b></li>`;
-    }
-
-    // Sections: Capabilities + Activity
-    const toolGrid = n.tools.map((t) => (
-      `<div class="tool-chip">` +
-        `<span class="tool-chip__name">` +
-          `<span class="tool-chip__scope tool-chip__scope--${escapeHtml(t.scope)}">${escapeHtml(t.scope)}</span>` +
-          `${escapeHtml(t.name)}` +
-        `</span>` +
-        `<span class="tool-chip__meta">${t.calls24h} · 24h</span>` +
-      `</div>`
-    )).join('') || '<div class="empty-hint">No tools granted.</div>';
-
-    const mcpGrid = n.mcp.map((m) => (
-      `<div class="mcp-chip">` +
-        `<span class="mcp-chip__name">${escapeHtml(m.name)}</span>` +
-        `<span class="mcp-chip__meta">${escapeHtml(m.meta)}</span>` +
-      `</div>`
-    )).join('') || '<div class="empty-hint">No external resources mounted.</div>';
-
-    const writeList = (n.permissions.writePaths || []).length
-      ? n.permissions.writePaths.map((p) => `<code>${escapeHtml(p)}</code>`).join(' ')
-      : '<span class="empty-hint">Read-only.</span>';
 
     const sessionList = agg.sessions.length
       ? `<ul class="node-sessions">` + agg.sessions.map((s) => (
@@ -946,44 +1133,14 @@
         `</div>` +
       `</div>`;
 
-    nodeEls.detail.innerHTML =
-      `<section class="node-section">` +
-        `<div class="node-section__head">` +
-          `<h3 class="node-section__title">Tools · ACP grants</h3>` +
-          `<span class="node-section__hint">${n.tools.length} authorized</span>` +
-        `</div>` +
-        `<div class="chip-grid">${toolGrid}</div>` +
-      `</section>` +
-
-      `<section class="node-section">` +
-        `<div class="node-section__head">` +
-          `<h3 class="node-section__title">Resources · MCP &amp; data</h3>` +
-          `<span class="node-section__hint">${n.mcp.length} mounted</span>` +
-        `</div>` +
-        `<div class="chip-grid">${mcpGrid}</div>` +
-      `</section>` +
-
+    return (
       `<section class="node-section">` +
         `<div class="node-section__head">` +
           `<h3 class="node-section__title">Memory &amp; context</h3>` +
         `</div>` +
         `<div class="stat-grid">` +
           `<div class="stat"><div class="stat__label">Context window</div><div class="stat__value">${escapeHtml(n.contextWindow)}</div></div>` +
-          `<div class="stat"><div class="stat__label">Long-term memory</div><div class="stat__value">${n.memoryItems}</div><div class="stat__sub">items indexed</div></div>` +
-        `</div>` +
-        `<details class="node-prompt">` +
-          `<summary>System prompt · preview</summary>` +
-          `<div class="node-prompt__body">${escapeHtml(n.systemPrompt)}</div>` +
-        `</details>` +
-      `</section>` +
-
-      `<section class="node-section">` +
-        `<div class="node-section__head">` +
-          `<h3 class="node-section__title">Permissions</h3>` +
-        `</div>` +
-        `<div class="stat-grid">` +
-          `<div class="stat"><div class="stat__label">Human-in-loop</div><div class="stat__value" style="font-size:13px">${escapeHtml(n.permissions.humanInLoop)}</div></div>` +
-          `<div class="stat"><div class="stat__label">Write paths</div><div class="stat__sub" style="margin-top:6px">${writeList}</div></div>` +
+          `<div class="stat"><div class="stat__label">Long-term memory</div><div class="stat__value">${n.memoryItems | 0}</div><div class="stat__sub">items indexed</div></div>` +
         `</div>` +
       `</section>` +
 
@@ -1007,27 +1164,179 @@
           `<h3 class="node-section__title">Telemetry · last 60 min</h3>` +
         `</div>` +
         telemetry +
-      `</section>`;
+      `</section>`
+    );
+  }
 
-    // Wire session jumps
-    nodeEls.detail.querySelectorAll('[data-jump-session]').forEach((a) => {
-      a.addEventListener('click', (e) => {
-        e.preventDefault();
-        const sid = a.dataset.jumpSession;
-        switchView('hub');
-        const row = document.querySelector(`.thread[data-session-id="${sid}"]`);
-        if (row) row.click();
+  /* Strip HTML tags from a string so values that may contain <em>/<b>
+     can be edited as plain text in a textarea without leaking markup. */
+  function stripTags(s) {
+    if (!s) return '';
+    const d = document.createElement('div');
+    d.innerHTML = s;
+    return d.textContent || '';
+  }
+
+  /* ---------- Main render ---------- */
+
+  function renderNodeDetail(name) {
+    if (!NODES[name]) return;
+    currentNodeId = name;
+    nodeDraft = deepCloneNode(NODES[name]);
+    nodeDirty = false;
+    const n = nodeDraft;
+    const status = nodeStatus(name);
+
+    document.querySelectorAll('.node-row').forEach((r) => {
+      r.classList.toggle('is-active', r.dataset.nodeId === name);
+    });
+
+    if (nodeEls.crumb) nodeEls.crumb.textContent = n.name;
+    if (nodeEls.titleSerif) nodeEls.titleSerif.textContent = n.name.replace(/\.node$/, '');
+    if (nodeEls.titleSans)  nodeEls.titleSans.textContent  = '.node';
+    if (nodeEls.kicker) {
+      const label = status === 'live' ? 'Streaming' : status === 'paused' ? 'Paused' : status === 'error' ? 'Error' : 'Idle';
+      nodeEls.kicker.innerHTML = `${escapeHtml(n.persona)} <span class="kicker__dot"></span> ${label}`;
+    }
+    if (nodeEls.lede) nodeEls.lede.innerHTML = n.lede;
+
+    if (nodeEls.meta) {
+      nodeEls.meta.innerHTML =
+        `<li>model · <b>${escapeHtml(n.model)}</b></li>` +
+        `<li>runtime · <b>${escapeHtml((n.acp && n.acp.protocol) || 'ACP v0.2')}</b></li>` +
+        `<li>session · <b>${escapeHtml((n.acp && n.acp.sessionMode) || '—')}</b></li>` +
+        `<li>created · <b>${escapeHtml(n.createdAt)}</b></li>` +
+        `<li>owner · <b>${escapeHtml(n.owner)}</b></li>`;
+    }
+
+    renderNodeStatusBar();
+    renderNodeDetailBody();
+  }
+
+  function renderNodeDetailBody() {
+    if (!nodeEls.detail || !nodeDraft) return;
+    const n = nodeDraft;
+    const tabs =
+      `<div class="node-tabs" role="tablist">` +
+        `<button class="node-tabs__btn${currentNodeTab === 'configure' ? ' is-active' : ''}" role="tab" type="button" data-node-tab="configure">Configure</button>` +
+        `<button class="node-tabs__btn${currentNodeTab === 'activity'  ? ' is-active' : ''}" role="tab" type="button" data-node-tab="activity">Activity</button>` +
+      `</div>`;
+
+    const body = currentNodeTab === 'activity'
+      ? activityTabHtml(currentNodeId)
+      : (
+          identitySectionHtml(n) +
+          acpSectionHtml(n) +
+          promptSectionHtml(n) +
+          toolsSectionHtml(n) +
+          mcpSectionHtml(n) +
+          permissionsSectionHtml(n)
+        );
+
+    nodeEls.detail.innerHTML = tabs + `<div class="node-tabs__panel">${body}</div>`;
+
+    // Tab switching
+    nodeEls.detail.querySelectorAll('[data-node-tab]').forEach((b) => {
+      b.addEventListener('click', () => {
+        if (currentNodeTab === b.dataset.nodeTab) return;
+        currentNodeTab = b.dataset.nodeTab;
+        renderNodeDetailBody();
       });
     });
+
+    // Configure tab: wire edits + add/remove buttons.
+    if (currentNodeTab === 'configure') {
+      nodeEls.detail.querySelectorAll('[data-bind]').forEach((el) => {
+        const evt = (el.tagName === 'SELECT') ? 'change' : 'input';
+        el.addEventListener(evt, () => {
+          const raw = el.value;
+          const val = (el.type === 'number')
+            ? (raw === '' ? 0 : Number(raw))
+            : raw;
+          setByPath(nodeDraft, el.dataset.bind, val);
+          markDirty();
+        });
+      });
+      nodeEls.detail.querySelectorAll('[data-add]').forEach((b) => {
+        b.addEventListener('click', () => {
+          const kind = b.dataset.add;
+          if (kind === 'tool') {
+            nodeDraft.tools = nodeDraft.tools || [];
+            nodeDraft.tools.push({ name: '', scope: 'read', calls24h: 0 });
+          } else if (kind === 'mcp') {
+            nodeDraft.mcp = nodeDraft.mcp || [];
+            nodeDraft.mcp.push({ name: '', meta: '' });
+          } else if (kind === 'writePath') {
+            nodeDraft.permissions = nodeDraft.permissions || { humanInLoop: HIL_OPTIONS[0], writePaths: [] };
+            nodeDraft.permissions.writePaths = nodeDraft.permissions.writePaths || [];
+            nodeDraft.permissions.writePaths.push('');
+          }
+          markDirty();
+          renderNodeDetailBody();
+        });
+      });
+      nodeEls.detail.querySelectorAll('[data-rm]').forEach((b) => {
+        b.addEventListener('click', () => {
+          const kind = b.dataset.rm;
+          const i = Number(b.dataset.index);
+          if (kind === 'tool')           nodeDraft.tools.splice(i, 1);
+          else if (kind === 'mcp')       nodeDraft.mcp.splice(i, 1);
+          else if (kind === 'writePath') nodeDraft.permissions.writePaths.splice(i, 1);
+          markDirty();
+          renderNodeDetailBody();
+        });
+      });
+    } else {
+      // Activity tab: wire session jumps
+      nodeEls.detail.querySelectorAll('[data-jump-session]').forEach((a) => {
+        a.addEventListener('click', (e) => {
+          e.preventDefault();
+          const sid = a.dataset.jumpSession;
+          switchView('hub');
+          const row = document.querySelector(`.thread[data-session-id="${sid}"]`);
+          if (row) row.click();
+        });
+      });
+    }
+  }
+
+  /* Tiny dotted-path setter so we can bind nested fields like
+     `acp.sessionMode` or `tools.2.scope` directly to form inputs. */
+  function setByPath(obj, path, value) {
+    const parts = path.split('.');
+    let cur = obj;
+    for (let i = 0; i < parts.length - 1; i++) {
+      const k = parts[i];
+      if (cur[k] == null) cur[k] = (/^\d+$/.test(parts[i + 1]) ? [] : {});
+      cur = cur[k];
+    }
+    cur[parts[parts.length - 1]] = value;
   }
 
   function handleNodeAction(name, act) {
     const n = NODES[name];
+    if (act === 'save') {
+      if (!nodeDraft || !n) return;
+      NODES[name] = nodeDraft;
+      nodeDirty = false;
+      refreshFleetMeta();
+      renderNodeList();
+      renderNodeDetail(name);
+      return;
+    }
+    if (act === 'revert') {
+      if (!n) return;
+      nodeDirty = false;
+      renderNodeDetail(name);
+      return;
+    }
     if (!n) return;
     if (act === 'toggle-pause') {
       n.paused = !n.paused;
+      if (nodeDraft) nodeDraft.paused = n.paused;
     } else if (act === 'restart') {
       n.paused = false;
+      if (nodeDraft) nodeDraft.paused = false;
     } else if (act === 'clone') {
       let i = 2;
       const base = name.replace(/\.node$/, '');
@@ -1043,6 +1352,8 @@
       NODE_PINS.delete(name);
       const remaining = Object.keys(NODES);
       currentNodeId = remaining[0] || null;
+      nodeDraft = null;
+      nodeDirty = false;
     }
     refreshFleetMeta();
     renderNodeList();
@@ -1114,6 +1425,7 @@
         systemPrompt: 'You are a new Remotent agent. Awaiting persona.',
         tools: [], mcp: [],
         permissions: { humanInLoop: 'ask · everywhere by default', writePaths: [] },
+        acp: Object.assign({}, ACP_DEFAULTS),
       };
       currentNodeId = id;
       refreshFleetMeta();
