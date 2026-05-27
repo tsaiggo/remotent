@@ -2,6 +2,8 @@ import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import globals from 'globals';
 import prettier from 'eslint-config-prettier';
+import reactX from 'eslint-plugin-react-x';
+import reactHooks from 'eslint-plugin-react-hooks';
 
 export default tseslint.config(
   js.configs.recommended,
@@ -35,6 +37,17 @@ export default tseslint.config(
         'error',
         { fixStyle: 'separate-type-imports', prefer: 'type-imports' },
       ],
+    },
+  },
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    plugins: {
+      'react-x': reactX,
+      'react-hooks': reactHooks,
+    },
+    rules: {
+      ...reactX.configs.recommended.rules,
+      ...reactHooks.configs.recommended.rules,
     },
   },
   {
