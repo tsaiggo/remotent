@@ -1,0 +1,439 @@
+/* ============================================================
+   Node detail v2 — ACP primitives surfaced
+   Bands, structured policy, subscriptions, outbound contracts.
+   ============================================================ */
+
+/* Band labels — small all-caps mono markers above the first section
+   of each IA band (Identity, Brain, Capabilities, Policy, Activity). */
+.band-label {
+  display: block;
+  margin: var(--space-band) 0 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.band-label:first-child { margin-top: 0; }
+.band-label + .node-section {
+  border-top: 0;
+  padding-top: 10px;
+}
+
+/* Identity dl — ACP coordinates strip */
+.dl-stats {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+  row-gap: 6px;
+  font-family: var(--sans);
+  font-size: 12px;
+}
+.dl-stats__row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 0 14px 0 0;
+  margin-right: 14px;
+  border-right: 1px solid var(--line);
+}
+.dl-stats__row:last-child {
+  border-right: 0;
+  margin-right: 0;
+  padding-right: 0;
+}
+.dl-stats dt {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.dl-stats dd {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.dl-stats dd code {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink);
+  background: var(--bg-2);
+  padding: 1px 5px;
+  border-radius: var(--radius);
+}
+
+/* ACP capabilities — tiny inline chips below the identity dl */
+.cap-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+.cap-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  color: var(--ink-2);
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+/* Prompt card — promoted system prompt at the top of the BRAIN band */
+.prompt-card { display: block; }
+.prompt-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.prompt-card__title {
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.prompt-card__edit {
+  font-family: var(--sans);
+  font-size: 11px;
+  color: var(--ink-3);
+  background: transparent;
+  border: 1px solid var(--line);
+  padding: 3px 10px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background .12s var(--tap), color .12s var(--tap), border-color .12s var(--tap);
+}
+.prompt-card__edit:hover {
+  background: var(--hover);
+  color: var(--ink);
+  border-color: var(--line-2);
+}
+.prompt-card__shell {
+  position: relative;
+  border-radius: var(--radius-lg);
+  background: var(--bg-2);
+  overflow: hidden;
+}
+.prompt-card__body {
+  margin: 0;
+  padding: 16px;
+  max-height: 280px;
+  overflow: auto;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.prompt-card__body::-webkit-scrollbar { width: 8px; }
+.prompt-card__body::-webkit-scrollbar-thumb {
+  background: var(--line-2);
+  border: 2px solid var(--bg-2);
+  border-radius: 8px;
+}
+.prompt-card__fade {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 36px;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(247, 246, 243, 0), var(--bg-2));
+}
+
+/* Tool chip — rich variant carries ACP weight (ack/ttl/rate/err + resources) */
+.tool-chip--rich {
+  display: block;
+  padding: 8px 10px;
+}
+.tool-chip--rich .tool-chip__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.tool-chip__acp {
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tool-chip__paths {
+  display: none;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--line);
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  overflow-wrap: anywhere;
+}
+.tool-chip__paths code {
+  display: inline-block;
+  margin: 0 6px 4px 0;
+  padding: 1px 5px;
+  background: var(--bg-2);
+  border-radius: var(--radius);
+  color: var(--ink-2);
+}
+.tool-chip--rich:hover .tool-chip__paths,
+.tool-chip--rich:focus-within .tool-chip__paths { display: block; }
+
+/* Subscriptions list — inbound topic streams */
+.sub-list, .out-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  overflow: hidden;
+}
+.sub-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 16px;
+  align-items: baseline;
+  padding: 8px 12px;
+  border-top: 1px solid var(--line);
+  transition: background .12s var(--tap);
+}
+.sub-row:first-child { border-top: 0; }
+.sub-row:hover { background: var(--hover); }
+.sub-row__topic {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sub-row__count,
+.sub-row__since {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.sub-row__qos {
+  font-family: var(--sans);
+  font-size: 11px;
+  color: var(--ink-2);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* Outbound row — peer node calls */
+.out-row {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto auto auto;
+  gap: 10px 16px;
+  align-items: baseline;
+  padding: 8px 12px;
+  border-top: 1px solid var(--line);
+  transition: background .12s var(--tap);
+}
+.out-row:first-child { border-top: 0; }
+.out-row:hover { background: var(--hover); }
+.out-row__arrow {
+  display: inline-flex;
+  align-items: center;
+  color: var(--ink-3);
+}
+.out-row__target {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px dashed transparent;
+  transition: color .12s var(--tap), border-color .12s var(--tap);
+}
+.out-row__target:hover {
+  color: var(--blue);
+  border-bottom-color: var(--blue);
+}
+.out-row__target--unknown {
+  color: var(--ink-3);
+  cursor: default;
+}
+.out-row__contract {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.out-row__calls,
+.out-row__p50 {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.out-row__qos {
+  font-family: var(--sans);
+  font-size: 11px;
+  color: var(--ink-2);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* ACP runtime card — structured 2-col label/value grid */
+.acp-runtime {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 6px 32px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+}
+.acp-runtime__row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  align-items: baseline;
+  gap: 12px;
+  padding: 4px 0;
+}
+.acp-runtime__label {
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.acp-runtime__value {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.acp-runtime__hint {
+  font-family: var(--sans);
+  font-size: 11px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Human-in-loop rules — trigger/action/scope table */
+.policy-table {
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--bg);
+}
+.policy-table__head,
+.policy-table__row {
+  display: grid;
+  grid-template-columns: 1fr 90px 90px;
+  gap: 12px;
+  padding: 8px 12px;
+  align-items: center;
+}
+.policy-table__head {
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--line);
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.policy-table__row {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+  border-top: 1px solid var(--line);
+  transition: background .12s var(--tap);
+}
+.policy-table__row:first-of-type { border-top: 0; }
+.policy-table__row:hover { background: var(--hover); }
+.policy-table__trigger {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.policy-table__scope {
+  font-family: var(--sans);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* Action chips — semantic color-coded permission verdicts */
+.policy-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+  border-radius: var(--radius);
+}
+.policy-chip--ask   { color: var(--blue-ink);   background: var(--blue-soft); }
+.policy-chip--block { color: var(--red-ink);    background: var(--red-soft); }
+.policy-chip--log   { color: var(--gray-ink);   background: var(--gray-soft); }
+.policy-chip--auto  { color: var(--green-ink);  background: var(--green-soft); }
+
+/* Write paths — keep flat, inline-code list */
+.write-paths {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-2);
+  line-height: 1.9;
+}
+.write-paths code {
+  display: inline-block;
+  margin: 0 6px 4px 0;
+  padding: 1px 6px;
+  background: var(--bg-2);
+  border-radius: var(--radius);
+  color: var(--ink);
+}
+.write-paths .empty-hint { padding: 0; font-size: 13px; }
+
+/* Dark-mode pairing — prompt-card fade needs the dark surface tone */
+@media (prefers-color-scheme: dark) {
+  .prompt-card__fade {
+    background: linear-gradient(to bottom, rgba(47, 47, 47, 0), var(--bg-2));
+  }
+  .prompt-card__body::-webkit-scrollbar-thumb { border-color: var(--bg-2); }
+}
+
+/* Narrow viewports — collapse runtime grid to single column */
+@media (max-width: 720px) {
+  .acp-runtime { grid-template-columns: 1fr; }
+  .sub-row     { grid-template-columns: 1fr auto auto; }
+  .sub-row__qos { grid-column: 1 / -1; color: var(--ink-3); font-size: 10px; }
+  .out-row     { grid-template-columns: auto 1fr auto; gap: 6px 12px; }
+  .out-row__contract,
+  .out-row__calls,
+  .out-row__p50,
+  .out-row__qos { grid-column: 2 / -1; padding-left: 22px; font-size: 11px; }
+  .policy-table__head,
+  .policy-table__row { grid-template-columns: 1fr 70px 70px; }
+}

@@ -1,0 +1,72 @@
+/* ============================================================
+   Remotent — Notion-inspired Visual System
+   Light, paper-like, hairline dividers, soft hover backgrounds.
+   ============================================================ */
+
+:root {
+  /* Surfaces — paper-white, layered with subtle warm grays */
+  --bg:        #ffffff;            /* main canvas */
+  --bg-1:      #fbfbfa;            /* secondary panel (sidebar) */
+  --bg-2:      #f7f6f3;            /* tertiary (code, callouts, hover-press) */
+  --bg-3:      #efeeec;            /* deeper hover / pressed */
+  --panel:     #ffffff;
+
+  /* Hairlines — Notion's signature near-invisible dividers */
+  --line:      rgba(55, 53, 47, 0.09);
+  --line-2:    rgba(55, 53, 47, 0.13);
+  --line-hi:   rgba(55, 53, 47, 0.20);
+
+  /* Soft hover/active tints (use over any surface) */
+  --hover:     rgba(55, 53, 47, 0.06);
+  --hover-2:   rgba(55, 53, 47, 0.08);
+  --press:     rgba(55, 53, 47, 0.12);
+
+  /* Ink — Notion's warm near-black + grayscale ramp */
+  --ink:       #37352f;            /* primary text */
+  --ink-2:     #5f5e58;            /* secondary text */
+  --ink-3:     #9b9a97;            /* tertiary / muted */
+  --ink-4:     #c4c3bf;            /* faint / disabled */
+
+  /* Accents — Notion blue + multi-color tag system (soft backgrounds + ink) */
+  --blue:        #2383e2;
+  --blue-hover:  #0b6fd1;
+  --blue-soft:   #e7f3f8;
+  --blue-ink:    #183a4d;
+
+  --red-soft:    #fdebec;  --red-ink:    #5d1715;
+  --orange-soft: #fadec9;  --orange-ink: #5c3b23;
+  --yellow-soft: #fdecc8;  --yellow-ink: #4a3b1a;
+  --green-soft:  #dbeddb;  --green-ink:  #1c3829;
+  --purple-soft: #eae4f2;  --purple-ink: #3c2c4d;
+  --pink-soft:   #f5e0e9;  --pink-ink:   #4c2238;
+  --gray-soft:   #ebeced;  --gray-ink:   #3e3e3a;
+  --brown-soft:  #e9e5e3;  --brown-ink:  #4a312a;
+
+  /* Status colors (live/warn) */
+  --live:   #2eaadc;
+  --warn:   #d9730d;
+  --error:  #e03e3e;
+
+  /* Typography */
+  --sans:  "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont,
+           "Segoe UI", "Helvetica Neue", "Roboto", Arial, sans-serif;
+  --serif: "Source Serif 4", "Lyon Text", Georgia, ui-serif,
+           "Times New Roman", serif;
+  --mono:  "JetBrains Mono", "iA Writer Mono", ui-monospace, "SF Mono",
+           Menlo, Consolas, monospace;
+
+  /* Geometry */
+  --rail-w:     48px;
+  --sessions-w: 260px;
+  --radius:     3px;               /* default — buttons, tags */
+  --radius-md:  4px;               /* inputs, list rows */
+  --radius-lg:  6px;               /* cards, callouts */
+  --space-band: 32px;              /* vertical breathing room between IA bands in node detail */
+  --tap:        cubic-bezier(.2,.7,.2,1);
+
+  /* Notion menu shadow (only used on floating elements) */
+  --shadow:
+    rgba(15, 15, 15, 0.05) 0 0 0 1px,
+    rgba(15, 15, 15, 0.10) 0 3px 6px,
+    rgba(15, 15, 15, 0.20) 0 9px 24px;
+}

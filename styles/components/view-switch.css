@@ -1,0 +1,26 @@
+/* ============================================================
+   View switching — User Hub vs Node Overview
+   The shell grid keeps 3 fixed columns; the second/third columns
+   are swapped between the two views via the `hidden` attribute.
+   ============================================================ */
+.nodes-panel,
+.canvas--node { min-width: 0; min-height: 0; }
+.nodes-panel[hidden],
+.canvas--node[hidden],
+.sessions[hidden],
+.canvas[hidden] { display: none !important; }
+.nodes-panel  { grid-column: 2; grid-row: 1; }
+.canvas--node { grid-column: 3; grid-row: 1; }
+.sessions     { grid-column: 2; grid-row: 1; }
+.canvas:not(.canvas--node) { grid-column: 3; grid-row: 1; }
+
+.nodes-panel .tabs {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.nodes-panel .tabs::-webkit-scrollbar { display: none; }
+.nodes-panel .tabs__btn {
+  flex: 0 0 auto;
+  padding: 4px 6px;
+}
+

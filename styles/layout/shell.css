@@ -1,0 +1,13 @@
+/* ============================================================
+   Shell — three-column grid
+   ============================================================ */
+.shell {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: var(--rail-w) var(--sessions-w) 1fr;
+  height: 100vh;
+  width: 100%;
+  background: var(--bg);
+}
+
