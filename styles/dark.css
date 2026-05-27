@@ -1,0 +1,56 @@
+/* ============================================================
+   Dark mode — Notion Dark
+   ============================================================ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:        #191919;
+    --bg-1:      #202020;
+    --bg-2:      #2f2f2f;
+    --bg-3:      #373737;
+    --panel:     #191919;
+
+    --line:      rgba(255, 255, 255, 0.094);
+    --line-2:    rgba(255, 255, 255, 0.13);
+    --line-hi:   rgba(255, 255, 255, 0.20);
+
+    --hover:     rgba(255, 255, 255, 0.055);
+    --hover-2:   rgba(255, 255, 255, 0.09);
+    --press:     rgba(255, 255, 255, 0.14);
+
+    --ink:       #e6e6e6;
+    --ink-2:     #b4b4b4;
+    --ink-3:     #8c8c8c;
+    --ink-4:     #5a5a5a;
+
+    --blue:        #2383e2;
+    --blue-hover:  #4ca1ea;
+    --blue-soft:   #133a4e;
+    --blue-ink:    #cfe6f4;
+
+    --red-soft:    #522e2a;  --red-ink:    #ffa39e;
+    --orange-soft: #5c3b23;  --orange-ink: #ffc599;
+    --yellow-soft: #564a2c;  --yellow-ink: #ffe09a;
+    --green-soft:  #243d30;  --green-ink:  #b3e1c2;
+    --purple-soft: #3c2c4d;  --purple-ink: #d7c5ed;
+    --pink-soft:   #4c2238;  --pink-ink:   #f0bedb;
+    --gray-soft:   #373737;  --gray-ink:   #d4d4d4;
+    --brown-soft:  #4a312a;  --brown-ink:  #e0c8be;
+
+    --live:   #5dbfe8;
+    --warn:   #e6a253;
+    --error:  #ff7369;
+  }
+
+  ::selection { background: rgba(35, 131, 226, 0.45); color: #ffffff; }
+
+  /* Inline code in dark needs softer red */
+  .prose code { color: #ff7369; background: var(--bg-2); }
+
+  /* Tooltip stays dark on dark, but slightly lighter */
+  .rail__btn[data-tooltip]::after { background: #3f3f3f; color: #ffffff; }
+
+  /* Scrollbar thumbs blend with panels */
+  .sessions::-webkit-scrollbar-thumb { border-color: var(--bg-1); }
+  .timeline::-webkit-scrollbar-thumb { border-color: var(--bg); }
+}
+

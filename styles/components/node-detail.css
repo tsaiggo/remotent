@@ -1,0 +1,289 @@
+/* ============================================================
+   Node detail — column 3
+   ============================================================ */
+.canvas--node {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  grid-template-columns: minmax(0, 1fr);
+  background: var(--bg);
+  overflow: hidden;
+}
+.canvas--node > * { position: relative; min-width: 0; }
+
+.node-status {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.node-status__endpoint {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-3);
+  padding: 2px 6px;
+  background: var(--bg-2);
+  border-radius: var(--radius);
+}
+.node-status__sep { width: 1px; height: 14px; background: var(--line); margin: 0 2px; }
+.node-status__btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px;
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--ink-2);
+  background: transparent;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  transition: background .12s var(--tap), color .12s var(--tap), border-color .12s var(--tap);
+}
+.node-status__btn:hover { background: var(--hover); color: var(--ink); border-color: var(--line-hi); }
+.node-status__btn--danger:hover { color: var(--error); border-color: rgba(224, 62, 62, 0.4); }
+
+.node-meta {
+  list-style: none; margin: 14px 0 0; padding: 0;
+  display: flex; gap: 0; flex-wrap: wrap;
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.node-meta li {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 0 12px 0 0;
+  margin-right: 12px;
+  border-right: 1px solid var(--line);
+}
+.node-meta li:last-child { border-right: 0; margin-right: 0; padding-right: 0; }
+.node-meta b {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.node-detail {
+  overflow-y: auto;
+  padding: 8px 96px 56px;
+  max-width: 1100px;
+}
+.node-detail::-webkit-scrollbar { width: 8px; }
+.node-detail::-webkit-scrollbar-thumb {
+  background: var(--line-2);
+  border: 2px solid var(--bg);
+  border-radius: 8px;
+}
+
+.node-section { padding: 24px 0; border-top: 1px solid var(--line); }
+.node-section:first-child { border-top: 0; }
+.node-section__head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 8px;
+}
+.node-section__title {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.node-section__hint {
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+/* Tool / MCP chip grid */
+.chip-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+}
+.tool-chip, .mcp-chip {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  transition: border-color .12s var(--tap), background .12s var(--tap);
+}
+.tool-chip:hover, .mcp-chip:hover { border-color: var(--line-hi); background: var(--bg-1); }
+.tool-chip__name, .mcp-chip__name {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+  font-weight: 500;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.tool-chip__meta, .mcp-chip__meta {
+  font-family: var(--sans);
+  font-size: 11px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.tool-chip__scope {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 0 5px;
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--gray-ink);
+  background: var(--gray-soft);
+  border-radius: var(--radius);
+}
+.tool-chip__scope--write { color: var(--orange-ink); background: var(--orange-soft); }
+.tool-chip__scope--read  { color: var(--blue-ink); background: var(--blue-soft); }
+
+/* Memory + permissions stat blocks */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+.stat {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+}
+.stat__label {
+  font-family: var(--sans);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.stat__value {
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 16px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.stat__sub {
+  margin-top: 2px;
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.node-prompt {
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--bg-1);
+}
+.node-prompt > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 8px 12px;
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--ink-2);
+  display: flex; align-items: center; gap: 8px;
+}
+.node-prompt > summary::-webkit-details-marker { display: none; }
+.node-prompt > summary::before {
+  content: '▸';
+  color: var(--ink-3);
+  transition: transform .12s var(--tap);
+}
+.node-prompt[open] > summary::before { transform: rotate(90deg); }
+.node-prompt__body {
+  padding: 0 12px 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Sessions list inside node detail */
+.node-sessions { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.node-sessions a {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius-md);
+  color: inherit; text-decoration: none;
+  transition: background .12s var(--tap);
+}
+.node-sessions a:hover { background: var(--hover); }
+.node-sessions__title { font-family: var(--sans); font-size: 13px; color: var(--ink); }
+.node-sessions__meta  { font-family: var(--sans); font-size: 12px; color: var(--ink-3); }
+
+/* Recent turns — compact reuse of timeline language */
+.node-turns { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.node-turn {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+}
+.node-turn__time {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.node-turn__body { font-family: var(--sans); font-size: 13px; color: var(--ink-2); line-height: 1.5; }
+.node-turn__body code {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+  background: var(--bg-2);
+  padding: 1px 4px;
+  border-radius: var(--radius);
+}
+
+/* Telemetry grid: small sparklines + numbers */
+.telemetry { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.telemetry__card {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+}
+.telemetry__head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 6px;
+}
+.telemetry__label {
+  font-family: var(--sans);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.telemetry__value {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.telemetry__spark { display: block; width: 100%; height: 32px; }
+
+.empty-hint {
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink-3);
+  padding: 12px 0;
+}
+
+/* Make canvas node chips look clickable when in hub view */
+.canvas__nodes .node[data-node-link] {
+  cursor: pointer;
+  transition: background .12s var(--tap), filter .12s var(--tap);
+}
+.canvas__nodes .node[data-node-link]:hover { filter: brightness(0.97); }
+

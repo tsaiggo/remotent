@@ -14,5 +14,5 @@ yarn.lock
 assets/
 
 # Existing source (formatted opportunistically as it's refactored in later PRs)
-styles.css
+styles/
 index.html

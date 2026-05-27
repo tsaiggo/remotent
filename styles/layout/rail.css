@@ -1,0 +1,82 @@
+/* ============================================================
+   Column 1 — Icon Rail
+   ============================================================ */
+.rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0;
+  background: var(--bg-1);
+  border-right: 1px solid var(--line);
+}
+.rail__brand {
+  display: grid; place-items: center;
+  width: 30px; height: 30px;
+  color: var(--ink);
+  border-radius: var(--radius);
+  margin-bottom: 14px;
+  transition: background .12s var(--tap);
+}
+.rail__brand:hover { background: var(--hover); }
+
+.rail__list {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-direction: column; gap: 2px;
+  flex: 1;
+}
+.rail__btn {
+  position: relative;
+  width: 30px; height: 30px;
+  display: grid; place-items: center;
+  color: var(--ink-3);
+  border-radius: var(--radius);
+  transition: color .12s var(--tap), background .12s var(--tap);
+}
+.rail__btn:hover { color: var(--ink-2); background: var(--hover); }
+.rail__btn.is-active { color: var(--ink); background: var(--hover-2); }
+
+/* Tooltip on hover — Notion floating chip */
+.rail__btn[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute; left: calc(100% + 10px); top: 50%;
+  transform: translateY(-50%) translateX(-4px);
+  padding: 4px 8px;
+  font-size: 12px;
+  white-space: nowrap;
+  color: #ffffff;
+  background: #2f2f2f;
+  border-radius: var(--radius);
+  opacity: 0; pointer-events: none;
+  transition: opacity .12s var(--tap), transform .12s var(--tap);
+  z-index: 50;
+}
+.rail__btn:hover[data-tooltip]::after {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+.rail__foot {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+.rail__pulse {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green-ink);
+  opacity: .7;
+  animation: pulse 2.4s var(--tap) infinite;
+}
+.rail__user {
+  width: 26px; height: 26px;
+  display: grid; place-items: center;
+  background: var(--blue);
+  color: #fff;
+  border-radius: 50%;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: .8; transform: scale(1); }
+  50%      { opacity: .35; transform: scale(.85); }
+}
+

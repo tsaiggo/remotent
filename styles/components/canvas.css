@@ -1,0 +1,81 @@
+/* ============================================================
+   Column 3 — Canvas (Notion document area)
+   ============================================================ */
+.canvas {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  /* Allow rows to shrink below their intrinsic min-content width so the
+     canvas (header, title, composer) never forces horizontal scroll on the
+     surrounding shell at narrow viewports. */
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  /* The canvas sits inside the shell's single 100vh row. Without an
+     explicit min-height: 0, the default `min-height: auto` lets the
+     canvas overflow the shell when its 1fr row (the timeline) has a lot
+     of content — which pushes the composer below the fold with no way
+     to reach it (body has overflow: hidden). */
+  min-height: 0;
+  background: var(--bg);
+}
+.canvas > * { position: relative; z-index: 1; }
+
+/* Header */
+.canvas__head {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+  min-height: 44px;
+}
+.canvas__head > * { min-width: 0; }
+.canvas__crumbs { color: var(--ink-3); display: inline-flex; align-items: center; gap: 0; }
+.canvas__crumbs > span:not(.canvas__sep):not(.canvas__crumb-current) {
+  padding: 2px 6px;
+  border-radius: var(--radius);
+  transition: background .12s var(--tap);
+  cursor: pointer;
+}
+.canvas__crumbs > span:not(.canvas__sep):not(.canvas__crumb-current):hover { background: var(--hover); }
+.canvas__sep { margin: 0 2px; color: var(--ink-4); }
+.canvas__crumb-current {
+  color: var(--ink);
+  padding: 2px 6px;
+  border-radius: var(--radius);
+  font-weight: 500;
+}
+
+.canvas__nodes { display: flex; align-items: center; gap: 6px; }
+.node {
+  position: relative;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 2px 8px;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: var(--radius);
+  background: var(--gray-soft);
+  color: var(--gray-ink);
+}
+.node__pulse {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor;
+  animation: pulse 1.8s var(--tap) infinite;
+}
+.node--dev      { background: var(--green-soft);  color: var(--green-ink); }
+.node--design   { background: var(--purple-soft); color: var(--purple-ink); }
+.node--research { background: var(--blue-soft);   color: var(--blue-ink); }
+
+.canvas__divider {
+  width: 1px; height: 18px; background: var(--line); margin: 0 4px;
+}
+.canvas__icon {
+  width: 28px; height: 28px;
+  display: grid; place-items: center;
+  color: var(--ink-3);
+  border-radius: var(--radius);
+  transition: color .12s var(--tap), background .12s var(--tap);
+}
+.canvas__icon:hover { color: var(--ink); background: var(--hover); }

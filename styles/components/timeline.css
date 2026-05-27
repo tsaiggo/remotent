@@ -1,0 +1,22 @@
+
+/* Timeline */
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 8px 96px 64px;
+  overflow-y: auto;
+  /* Grid items default to min-height: auto, which makes the 1fr row
+     grow to fit the timeline's content instead of clipping and scrolling
+     inside it. min-height: 0 lets the 1fr track actually constrain the
+     timeline so it scrolls internally and the composer stays pinned to
+     the bottom of the canvas. */
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-hi) transparent;
+}
+.timeline::-webkit-scrollbar { width: 10px; }
+.timeline::-webkit-scrollbar-thumb {
+  background: var(--line-hi);
+  border-radius: 5px;
+  border: 2px solid var(--bg);
+}

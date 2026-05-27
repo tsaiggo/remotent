@@ -1,0 +1,224 @@
+/* ============================================================
+   Column 2 — Sessions (Notion sidebar)
+   ============================================================ */
+.sessions {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-1);
+  border-right: 1px solid var(--line);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.sessions__head {
+  padding: 14px 14px 8px;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.sessions__title h1 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+}
+.sessions__title h1 .serif,
+.sessions__title h1 .sans {
+  font-family: var(--sans);
+  font-style: normal;
+  font-weight: 600;
+}
+.sessions__title h1 .sans { color: var(--ink-2); font-weight: 500; }
+.sessions__sub {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: var(--ink-3);
+  letter-spacing: 0;
+  text-transform: none;
+  font-weight: 400;
+}
+.sessions__sub .sep { margin: 0 5px; color: var(--ink-4); }
+
+.sessions__new {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: var(--ink-2);
+  border-radius: var(--radius);
+  transition: background .12s var(--tap), color .12s var(--tap);
+}
+.sessions__new:hover { background: var(--hover); color: var(--ink); }
+
+/* Search */
+.sessions__search {
+  display: flex; align-items: center; gap: 8px;
+  margin: 4px 8px 8px;
+  padding: 6px 8px;
+  background: var(--bg-2);
+  border-radius: var(--radius-md);
+  color: var(--ink-3);
+  transition: background .12s var(--tap), box-shadow .12s var(--tap);
+}
+.sessions__search:hover { background: var(--bg-3); }
+.sessions__search:focus-within {
+  background: var(--bg);
+  box-shadow: 0 0 0 1px var(--line-hi), 0 0 0 2px rgba(35, 131, 226, 0.25);
+}
+.sessions__search input {
+  flex: 1; min-width: 0;
+  font-size: 13px;
+  color: var(--ink);
+}
+.sessions__search input::placeholder { color: var(--ink-3); }
+.sessions__search kbd {
+  font-family: var(--sans);
+  font-size: 11px;
+  color: var(--ink-3);
+  padding: 1px 5px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+/* Tabs */
+.tabs {
+  display: flex; gap: 2px;
+  padding: 0 8px 8px;
+  border-bottom: 1px solid var(--line);
+}
+.tabs__btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: var(--ink-3);
+  border-radius: var(--radius);
+  transition: color .12s var(--tap), background .12s var(--tap);
+}
+.tabs__btn:hover { color: var(--ink-2); background: var(--hover); }
+.tabs__btn.is-active {
+  color: var(--ink);
+  background: var(--hover-2);
+  font-weight: 500;
+}
+.tabs__count {
+  font-family: var(--sans);
+  font-size: 11px;
+  color: var(--ink-3);
+  font-weight: 400;
+}
+.tabs__btn.is-active .tabs__count { color: var(--ink-2); }
+
+/* Group header — Notion's small caps section labels */
+.group { padding: 6px 0 2px; }
+.group__label {
+  display: flex; align-items: center; gap: 8px;
+  margin: 10px 14px 2px;
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-3);
+  font-weight: 500;
+}
+.group__rule { display: none; }       /* Notion uses no rule line on group labels */
+
+/* Sessions scroll region */
+.sessions > .group:last-of-type { padding-bottom: 18px; }
+.sessions {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-hi) transparent;
+}
+.sessions::-webkit-scrollbar { width: 8px; }
+.sessions::-webkit-scrollbar-thumb {
+  background: var(--line-hi);
+  border-radius: 4px;
+  border: 2px solid var(--bg-1);
+}
+.sessions { overflow-y: auto; }
+
+/* Thread (page row) */
+.thread-list { list-style: none; margin: 0; padding: 0 6px; }
+.thread {
+  position: relative;
+  display: grid;
+  grid-template-columns: 14px 1fr auto;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 5px 8px;
+  margin: 1px 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background .08s var(--tap);
+}
+.thread:hover { background: var(--hover); }
+.thread.is-active { background: var(--hover-2); }
+
+.thread__dot {
+  width: 6px; height: 6px; margin-top: 8px;
+  border-radius: 50%;
+  background: var(--ink-4);
+  justify-self: center;
+}
+.thread__dot.is-live {
+  background: var(--live);
+  box-shadow: 0 0 0 3px rgba(46, 170, 220, 0.20);
+  animation: pulse 2s var(--tap) infinite;
+}
+.thread__dot.is-warn { background: var(--warn); }
+
+.thread__body { min-width: 0; }
+.thread__row {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 6px;
+}
+.thread__title {
+  font-size: 14px;
+  color: var(--ink);
+  font-weight: 400;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  letter-spacing: -0.003em;
+}
+.thread.is-active .thread__title { font-weight: 500; }
+.thread__time {
+  font-family: var(--sans);
+  font-size: 11px;
+  color: var(--ink-3);
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.thread__snippet {
+  margin: 1px 0 0;
+  font-size: 12px;
+  color: var(--ink-3);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  display: flex; align-items: center; gap: 5px;
+}
+.thread__snippet em { font-style: normal; color: var(--ink-3); }
+
+.thread__pin {
+  opacity: 0;
+  color: var(--ink-3);
+  padding: 3px;
+  border-radius: var(--radius);
+  transition: opacity .12s var(--tap), color .12s var(--tap), background .12s var(--tap);
+}
+.thread:hover .thread__pin, .thread__pin.is-on { opacity: 1; }
+.thread__pin:hover { background: var(--hover); color: var(--ink); }
+.thread__pin.is-on { color: var(--warn); }
+
+/* Tags — Notion soft-color chips */
+.tag {
+  display: inline-block;
+  padding: 1px 6px;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  border-radius: var(--radius);
+  background: var(--gray-soft);
+  color: var(--gray-ink);
+}
+.tag--dev      { background: var(--green-soft);  color: var(--green-ink); }
+.tag--design   { background: var(--purple-soft); color: var(--purple-ink); }
+.tag--research { background: var(--blue-soft);   color: var(--blue-ink); }
+.tag--human    { background: var(--orange-soft); color: var(--orange-ink); }
+
