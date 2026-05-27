@@ -16,6 +16,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
     "prepare": "simple-git-hooks || true"
   },
   "simple-git-hooks": {
@@ -32,6 +34,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
+    "@storybook/react-vite": "^10.4.1",
     "@types/node": "^22.10.0",
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
@@ -46,6 +49,7 @@
     "lint-staged": "^15.3.0",
     "prettier": "^3.4.2",
     "simple-git-hooks": "^2.11.1",
+    "storybook": "^10.4.1",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.18.0",
     "vite": "^7.0.0",

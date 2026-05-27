@@ -5,6 +5,7 @@ node_modules/
 dist/
 .vite/
 coverage/
+storybook-static/
 
 # IDE / editor
 .idea/
