@@ -1,4 +1,6 @@
-export const SESSIONS = {
+import type { SessionMap } from '../types/index.js';
+
+export const SESSIONS: SessionMap = {
   orbital: {
     crumb: 'Orbital telemetry refactor',
     kicker: 'Session 0241 · started 02:14 UTC',

@@ -1,10 +1,11 @@
 import { AGENT_AVATAR, HUMAN_AVATAR_URL, SVG } from '../data/avatars.js';
 import { SESSIONS } from '../data/sessions.js';
 import { state } from '../state/store.js';
+import type { Session, SessionNodeRef, Turn } from '../types/index.js';
 import { escapeHtml } from '../util/dom.js';
 
 /* Render a single turn to an HTML string. */
-export function turnHtml(turn) {
+export function turnHtml(turn: Turn): string {
   const isHuman = turn.kind === 'human';
   const node = turn.node || '';
   const humanAvatarImg = `<img class="turn__avatar-img" src="${HUMAN_AVATAR_URL}" alt="">`;
@@ -79,7 +80,14 @@ export function turnHtml(turn) {
 /* ============================================================
    Canvas renderer
    ============================================================ */
-export const els = {
+interface SessionEls {
+  crumb: HTMLElement | null;
+  title: HTMLElement | null;
+  nodes: HTMLElement | null;
+  timeline: HTMLElement | null;
+}
+
+export const els: SessionEls = {
   crumb: document.getElementById('crumbCurrent'),
   title: document.getElementById('canvasTitle'),
   nodes: document.getElementById('canvasNodes'),
@@ -87,27 +95,28 @@ export const els = {
 };
 
 // Preserve the trailing icon buttons (share/branch/more) of canvasNodes.
-const NODE_TRAILING = els.nodes
+const NODE_TRAILING: Element[] = els.nodes
   ? Array.from(els.nodes.children).filter(
       (c) => c.classList.contains('canvas__divider') || c.classList.contains('canvas__icon'),
     )
   : [];
 
-export function renderNodes(nodes) {
-  if (!els.nodes) return;
-  els.nodes.innerHTML = '';
+export function renderNodes(nodes: SessionNodeRef[]): void {
+  const nodesEl = els.nodes;
+  if (!nodesEl) return;
+  nodesEl.innerHTML = '';
   nodes.forEach((n) => {
     const span = document.createElement('span');
     span.className = `node node--${n.kind}`;
     span.title = n.title || '';
     if (n.live) span.innerHTML = `<span class="node__pulse"></span>${escapeHtml(n.name)}`;
     else span.textContent = n.name;
-    els.nodes.appendChild(span);
+    nodesEl.appendChild(span);
   });
-  NODE_TRAILING.forEach((el) => els.nodes.appendChild(el));
+  NODE_TRAILING.forEach((el) => nodesEl.appendChild(el));
 }
 
-function renderTitle(s) {
+function renderTitle(s: Session): void {
   if (!els.title) return;
   els.title.innerHTML =
     `<p class="kicker">${escapeHtml(s.kicker || '')} <span class="kicker__dot"></span></p>` +
@@ -116,7 +125,7 @@ function renderTitle(s) {
     (s.lede ? `<p class="lede">${s.lede}</p>` : '');
 }
 
-export function renderSession(id) {
+export function renderSession(id: string): void {
   const s = SESSIONS[id];
   if (!s) return;
   state.currentSessionId = id;
@@ -129,7 +138,7 @@ export function renderSession(id) {
   }
 }
 
-function bindThread(row) {
+function bindThread(row: HTMLElement): void {
   row.addEventListener('click', () => {
     document.querySelectorAll('.thread').forEach((r) => r.classList.remove('is-active'));
     row.classList.add('is-active');
@@ -149,16 +158,16 @@ function bindThread(row) {
       pin.classList.toggle('is-on');
       const on = pin.classList.contains('is-on');
       pin.setAttribute('aria-label', on ? 'Unpin' : 'Pin');
-      pin.title = on ? 'Pinned' : 'Pin';
+      if (pin instanceof HTMLElement) pin.title = on ? 'Pinned' : 'Pin';
     });
   }
 }
 
-export function initSession() {
+export function initSession(): void {
   /* ============================================================
      Sidebar wiring — tabs, pin, click-to-navigate, New session
      ============================================================ */
-  const tabs = document.querySelectorAll('.tabs__btn');
+  const tabs = document.querySelectorAll<HTMLElement>('.tabs__btn');
   tabs.forEach((tab) => {
     tab.addEventListener('click', () => {
       tabs.forEach((t) => {
@@ -169,7 +178,7 @@ export function initSession() {
       tab.setAttribute('aria-selected', 'true');
 
       const filter = tab.dataset.filter;
-      document.querySelectorAll('.thread').forEach((row) => {
+      document.querySelectorAll<HTMLElement>('.thread').forEach((row) => {
         const kind = row.dataset.kind;
         const show = filter === 'all' || filter === kind;
         row.style.display = show ? '' : 'none';
@@ -177,7 +186,7 @@ export function initSession() {
     });
   });
 
-  document.querySelectorAll('.thread').forEach(bindThread);
+  document.querySelectorAll<HTMLElement>('.thread').forEach(bindThread);
 
   /* New session button — prepend a fresh session into Today. */
   const newBtn = document.getElementById('newSessionBtn');
@@ -222,6 +231,7 @@ export function initSession() {
   /* ============================================================
      Initial paint — render the active session (matches markup).
      ============================================================ */
-  const initial = document.querySelector('.thread.is-active')?.dataset.sessionId || 'orbital';
+  const initial =
+    document.querySelector<HTMLElement>('.thread.is-active')?.dataset.sessionId || 'orbital';
   renderSession(initial);
 }

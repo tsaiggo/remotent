@@ -1,4 +1,4 @@
-export const SVG = {
+export const SVG: Record<string, string> = {
   dev: '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m8 6-6 6 6 6M16 6l6 6-6 6"/></svg>',
   design:
     '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h16"/></svg>',
@@ -17,7 +17,7 @@ export const SVG = {
 export const HUMAN_AVATAR_URL =
   'https://github.com/user-attachments/assets/ee226c0a-c50d-44d5-b97b-52808f1b3c85';
 
-export const AGENT_AVATAR = {
+export const AGENT_AVATAR: Record<string, string> = {
   dev: 'assets/avatars/dev.png',
   design: 'assets/avatars/design.png',
   research: 'assets/avatars/research.png',
