@@ -1,6 +1,7 @@
 import { NODES } from '../data/nodes.js';
 import { NODE_PINS, state } from '../state/store.js';
 import { switchView } from '../state/view.js';
+import type { AgentNode } from '../types/index.js';
 import { escapeHtml } from '../util/dom.js';
 import { sparkSvg } from '../util/spark.js';
 import { nowClock } from '../util/time.js';
@@ -12,14 +13,15 @@ import {
   renderNodeList,
 } from './nodes-list.js';
 
-export function renderNodeDetail(name) {
+export function renderNodeDetail(name: string) {
   if (!NODES[name]) return;
+  if (!nodeEls.detail) return;
   state.currentNodeId = name;
   const n = NODES[name];
   const agg = nodeAggregates(name);
   const status = nodeStatus(name);
 
-  document.querySelectorAll('.node-row').forEach((r) => {
+  document.querySelectorAll<HTMLElement>('.node-row').forEach((r) => {
     r.classList.toggle('is-active', r.dataset.nodeId === name);
   });
 
@@ -56,8 +58,8 @@ export function renderNodeDetail(name) {
       `<button class="node-status__btn" data-act="restart" type="button">Restart</button>` +
       `<button class="node-status__btn" data-act="clone" type="button">Clone</button>` +
       `<button class="node-status__btn node-status__btn--danger" data-act="archive" type="button">Archive</button>`;
-    nodeEls.statusBar.querySelectorAll('button[data-act]').forEach((b) => {
-      b.addEventListener('click', () => handleNodeAction(name, b.dataset.act));
+    nodeEls.statusBar.querySelectorAll<HTMLButtonElement>('button[data-act]').forEach((b) => {
+      b.addEventListener('click', () => handleNodeAction(name, b.dataset.act ?? ''));
     });
   }
 
@@ -179,7 +181,7 @@ export function renderNodeDetail(name) {
   const acp = n.acp || {};
   const att = acp.attestation || {};
   const hs = acp.handshake || {};
-  const pol = n.policy || {};
+  const pol = n.policy;
   const ack = acp.ack || {};
   const rl = pol.rateLimit || {};
   const cc = pol.concurrency || {};
@@ -254,7 +256,7 @@ export function renderNodeDetail(name) {
       `</ul>`
     : '<div class="empty-hint">No outbound contracts.</div>';
 
-  const runtimeRow = (label, val) =>
+  const runtimeRow = (label: string, val: string) =>
     `<div class="acp-runtime__row">` +
     `<span class="acp-runtime__label">${escapeHtml(label)}</span>` +
     `<span class="acp-runtime__value">${val}</span>` +
@@ -286,7 +288,12 @@ export function renderNodeDetail(name) {
     `</div>`;
 
   const policyRules = pol.humanInLoop || [];
-  const allowedAct = { ask: 1, block: 1, log: 1, auto: 1 };
+  const allowedAct: Record<string, true | undefined> = {
+    ask: true,
+    block: true,
+    log: true,
+    auto: true,
+  };
   const policyTable = policyRules.length
     ? `<div class="policy-table" role="table">` +
       `<div class="policy-table__head" role="row">` +
@@ -408,27 +415,27 @@ export function renderNodeDetail(name) {
     `</section>`;
 
   // Wire session jumps
-  nodeEls.detail.querySelectorAll('[data-jump-session]').forEach((a) => {
+  nodeEls.detail.querySelectorAll<HTMLAnchorElement>('[data-jump-session]').forEach((a) => {
     a.addEventListener('click', (e) => {
       e.preventDefault();
       const sid = a.dataset.jumpSession;
       switchView('hub');
-      const row = document.querySelector(`.thread[data-session-id="${sid}"]`);
+      const row = document.querySelector<HTMLElement>(`.thread[data-session-id="${sid ?? ''}"]`);
       if (row) row.click();
     });
   });
 
   // Wire node jumps (outbound contracts → peer node detail)
-  nodeEls.detail.querySelectorAll('[data-jump-node]').forEach((a) => {
+  nodeEls.detail.querySelectorAll<HTMLAnchorElement>('[data-jump-node]').forEach((a) => {
     a.addEventListener('click', (e) => {
       e.preventDefault();
       const nid = a.dataset.jumpNode;
-      if (NODES[nid]) renderNodeDetail(nid);
+      if (nid && NODES[nid]) renderNodeDetail(nid);
     });
   });
 }
 
-export function handleNodeAction(name, act) {
+export function handleNodeAction(name: string, act: string) {
   const n = NODES[name];
   if (!n) return;
   if (act === 'toggle-pause') {
@@ -439,7 +446,7 @@ export function handleNodeAction(name, act) {
     let i = 2;
     const base = name.replace(/\.node$/, '');
     while (NODES[`${base}-${i}.node`]) i++;
-    const clone = JSON.parse(JSON.stringify(n));
+    const clone = JSON.parse(JSON.stringify(n)) as AgentNode;
     clone.name = `${base}-${i}.node`;
     clone.createdAt = nowClock() + ' local';
     clone.paused = true;

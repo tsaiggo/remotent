@@ -1,4 +1,6 @@
-export const NODES = {
+import type { NodeMap } from '../types/index.js';
+
+export const NODES: NodeMap = {
   'dev.node': {
     name: 'dev.node',
     kind: 'dev',

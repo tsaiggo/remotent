@@ -1,5 +1,6 @@
 import { SESSIONS } from '../data/sessions.js';
 import { state } from '../state/store.js';
+import type { Turn } from '../types/index.js';
 import { escapeHtml } from '../util/dom.js';
 import { nowClock, pad } from '../util/time.js';
 import { els, turnHtml } from './session.js';
@@ -11,7 +12,8 @@ import { els, turnHtml } from './session.js';
 const form = document.getElementById('composer');
 const input = document.getElementById('composerInput');
 
-function appendTurn(turn) {
+function appendTurn(turn: Turn): void {
+  if (!state.currentSessionId) return;
   const s = SESSIONS[state.currentSessionId];
   if (!s) return;
   s.turns.push(turn);
@@ -21,8 +23,9 @@ function appendTurn(turn) {
   }
 }
 
-const AGENT_REPLIES = [
+const AGENT_REPLIES: Turn[] = [
   {
+    kind: 'agent',
     node: 'dev',
     who: 'dev.node',
     role: 'agent · gpt-codex',
@@ -30,6 +33,7 @@ const AGENT_REPLIES = [
     text: 'Acknowledged. Drafting a patch and running the affected suite in the background.',
   },
   {
+    kind: 'agent',
     node: 'design',
     who: 'design.node',
     role: 'agent · claude-opus',
@@ -37,6 +41,7 @@ const AGENT_REPLIES = [
     text: 'Got it — I’ll stage a visual diff on the operator console and surface anything that drifts from the token contract.',
   },
   {
+    kind: 'agent',
     node: 'research',
     who: 'research.node',
     role: 'agent · gemini',
@@ -44,7 +49,7 @@ const AGENT_REPLIES = [
   },
 ];
 
-export function initComposer() {
+export function initComposer(): void {
   /* ============================================================
      Live clock + simulated streaming text. These re-resolve their
      DOM targets every tick so they keep working as sessions swap.
@@ -70,6 +75,7 @@ export function initComposer() {
     const el = document.getElementById('streamText');
     if (!el) return;
     const target = STREAM_PHRASES[sPi];
+    if (!target) return;
     if (sMode === 'type') {
       sCi++;
       if (sCi >= target.length) {
@@ -92,7 +98,7 @@ export function initComposer() {
     el.innerHTML = text + '<span class="caret">▍</span>';
   }, 55);
 
-  if (form && input) {
+  if (form && input instanceof HTMLInputElement) {
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       const value = input.value.trim();
@@ -108,31 +114,17 @@ export function initComposer() {
       });
 
       const reply = AGENT_REPLIES[Math.floor(Math.random() * AGENT_REPLIES.length)];
+      if (!reply) return;
       const replyForSession = state.currentSessionId;
       setTimeout(() => {
+        const queued: Turn = { ...reply, time: nowClock() };
         // Only deliver the reply if the user is still viewing that session.
         if (state.currentSessionId !== replyForSession) {
           // Still record it in the session's data so it appears when revisited.
-          SESSIONS[replyForSession]?.turns.push({
-            kind: 'agent',
-            node: reply.node,
-            who: reply.who,
-            role: reply.role,
-            roleClass: reply.roleClass,
-            time: nowClock(),
-            text: reply.text,
-          });
+          if (replyForSession) SESSIONS[replyForSession]?.turns.push(queued);
           return;
         }
-        appendTurn({
-          kind: 'agent',
-          node: reply.node,
-          who: reply.who,
-          role: reply.role,
-          roleClass: reply.roleClass,
-          time: nowClock(),
-          text: reply.text,
-        });
+        appendTurn(queued);
       }, 900);
     });
 
@@ -140,7 +132,7 @@ export function initComposer() {
     document.addEventListener('keydown', (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        document.querySelector('.sessions__search input')?.focus();
+        document.querySelector<HTMLInputElement>('.sessions__search input')?.focus();
       }
     });
   }
