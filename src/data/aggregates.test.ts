@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { nodeAggregates, nodeStatus } from './nodes-list.js';
+import { nodeAggregates, nodeStatus } from './aggregates.js';
 
 describe('nodeAggregates', () => {
   it('returns the live flag, sessions, and recent turns for a known node', () => {

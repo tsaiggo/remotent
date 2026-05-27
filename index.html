@@ -76,85 +76,12 @@
 
       <!-- ░░░ Node Overview — Column 2: Node list ░░░ -->
       <aside class="nodes-panel" aria-label="Nodes" hidden>
-        <header class="sessions__head">
-          <div class="sessions__title">
-            <h1>
-              <span class="serif">Nod</span><span class="sans">·es</span>
-            </h1>
-            <p class="sessions__sub" id="nodesFleetMeta">ACP fleet · 0 online / 0 total</p>
-          </div>
-
-          <button class="sessions__new" id="newNodeBtn" aria-label="New node">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4">
-              <path d="M12 5v14M5 12h14"/>
-            </svg>
-            <span>New</span>
-          </button>
-        </header>
-
-        <div class="sessions__search">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
-            <circle cx="11" cy="11" r="6.5"/><path d="m20 20-3.5-3.5"/>
-          </svg>
-          <input type="search" id="nodesSearch" placeholder="Search nodes, models, tools…" aria-label="Search nodes" />
-          <kbd>⌘K</kbd>
-        </div>
-
-        <nav class="tabs" role="tablist" aria-label="Filter nodes">
-          <button class="tabs__btn is-active" role="tab" aria-selected="true" data-node-filter="all">
-            All <span class="tabs__count" data-count-for="all">0</span>
-          </button>
-          <button class="tabs__btn" role="tab" aria-selected="false" data-node-filter="live">
-            Live <span class="tabs__count" data-count-for="live">0</span>
-          </button>
-          <button class="tabs__btn" role="tab" aria-selected="false" data-node-filter="idle">
-            Idle <span class="tabs__count" data-count-for="idle">0</span>
-          </button>
-          <button class="tabs__btn" role="tab" aria-selected="false" data-node-filter="paused">
-            Paused <span class="tabs__count" data-count-for="paused">0</span>
-          </button>
-          <button class="tabs__btn" role="tab" aria-selected="false" data-node-filter="error">
-            Error <span class="tabs__count" data-count-for="error">0</span>
-          </button>
-        </nav>
-
-        <section class="group" aria-label="Pinned">
-          <h2 class="group__label"><span>Pinned</span><span class="group__rule" aria-hidden="true"></span></h2>
-          <ul class="thread-list node-list" id="nodeListPinned" role="list"></ul>
-        </section>
-
-        <section class="group" aria-label="Fleet">
-          <h2 class="group__label"><span>Fleet</span><span class="group__rule" aria-hidden="true"></span></h2>
-          <ul class="thread-list node-list" id="nodeListAll" role="list"></ul>
-        </section>
+        <!-- React mount: src/react/NodesPanel.tsx via App.tsx portal -->
       </aside>
 
       <!-- ░░░ Node Overview — Column 3: Node detail canvas ░░░ -->
       <section class="canvas canvas--node" aria-label="Node detail" hidden>
-        <header class="canvas__head">
-          <div class="canvas__crumbs">
-            <span>Fleet</span>
-            <span class="canvas__sep">/</span>
-            <span class="canvas__crumb-current" id="nodeCrumb">—</span>
-          </div>
-
-          <div class="canvas__nodes" id="nodeStatus" aria-label="Node status">
-            <!-- populated by JS: pulse + acp endpoint + actions -->
-          </div>
-        </header>
-
-        <div class="canvas__title" id="nodeTitle">
-          <p class="kicker" id="nodeKicker">—</p>
-          <h2 class="display">
-            <span class="display__serif" id="nodeNameSerif">—</span><span class="display__sans" id="nodeNameSans"></span>
-          </h2>
-          <p class="lede" id="nodeLede">—</p>
-          <ul class="node-meta" id="nodeMeta" aria-label="Node metadata"></ul>
-        </div>
-
-        <div class="node-detail" id="nodeDetail">
-          <!-- Capabilities + Activity sections rendered by JS -->
-        </div>
+        <!-- React mount: src/react/NodeDetail.tsx via App.tsx portal -->
       </section>
       <div id="react-root" hidden></div>
     </main>
