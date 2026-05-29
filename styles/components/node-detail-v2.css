@@ -27,6 +27,7 @@
   flex-wrap: wrap;
   margin: 0;
   padding: 0;
+  column-gap: 22px;
   row-gap: 6px;
   font-family: var(--sans);
   font-size: 12px;
@@ -35,14 +36,8 @@
   display: inline-flex;
   align-items: baseline;
   gap: 6px;
-  padding: 0 14px 0 0;
-  margin-right: 14px;
-  border-right: 1px solid var(--line);
-}
-.dl-stats__row:last-child {
-  border-right: 0;
-  margin-right: 0;
-  padding-right: 0;
+  min-width: 0;
+  max-width: 100%;
 }
 .dl-stats dt {
   margin: 0;
@@ -67,6 +62,8 @@
   background: var(--bg-2);
   padding: 1px 5px;
   border-radius: var(--radius);
+  overflow-wrap: anywhere;
+  min-width: 0;
 }
 
 /* ACP capabilities — tiny inline chips below the identity dl */
@@ -192,8 +189,7 @@
   border-radius: var(--radius);
   color: var(--ink-2);
 }
-.tool-chip--rich:hover .tool-chip__paths,
-.tool-chip--rich:focus-within .tool-chip__paths { display: block; }
+.tool-chip--rich .tool-chip__paths { display: block; }
 
 /* Subscriptions list — inbound topic streams */
 .sub-list, .out-list {
@@ -207,7 +203,7 @@
 }
 .sub-row {
   display: grid;
-  grid-template-columns: 1fr auto auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   gap: 16px;
   align-items: baseline;
   padding: 8px 12px;
@@ -243,7 +239,7 @@
 /* Outbound row — peer node calls */
 .out-row {
   display: grid;
-  grid-template-columns: auto auto 1fr auto auto auto;
+  grid-template-columns: auto minmax(0, auto) minmax(0, 1fr) auto auto auto;
   gap: 10px 16px;
   align-items: baseline;
   padding: 8px 12px;
@@ -264,6 +260,10 @@
   text-decoration: none;
   border-bottom: 1px dashed transparent;
   transition: color .12s var(--tap), border-color .12s var(--tap);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .out-row__target:hover {
   color: var(--blue);
@@ -277,6 +277,10 @@
   font-family: var(--mono);
   font-size: 12px;
   color: var(--ink-2);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .out-row__calls,
 .out-row__p50 {
@@ -306,7 +310,7 @@
 }
 .acp-runtime__row {
   display: grid;
-  grid-template-columns: 120px 1fr;
+  grid-template-columns: 120px minmax(0, 1fr);
   align-items: baseline;
   gap: 12px;
   padding: 4px 0;
@@ -324,8 +328,10 @@
   font-size: 12px;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .acp-runtime__hint {
   font-family: var(--sans);
@@ -345,7 +351,7 @@
 .policy-table__head,
 .policy-table__row {
   display: grid;
-  grid-template-columns: 1fr 90px 90px;
+  grid-template-columns: minmax(0, 1fr) 90px 90px;
   gap: 12px;
   padding: 8px 12px;
   align-items: center;
@@ -413,6 +419,9 @@
   background: var(--bg-2);
   border-radius: var(--radius);
   color: var(--ink);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-width: 100%;
 }
 .write-paths .empty-hint { padding: 0; font-size: 13px; }
 
@@ -424,16 +433,20 @@
   .prompt-card__body::-webkit-scrollbar-thumb { border-color: var(--bg-2); }
 }
 
-/* Narrow viewports — collapse runtime grid to single column */
-@media (max-width: 720px) {
+/* Narrow viewports — match the shell's 1100/860 cascade so v2 multi-column
+   grids collapse at the same point the nodes-panel starts squeezing them. */
+@media (max-width: 1100px) {
   .acp-runtime { grid-template-columns: 1fr; }
-  .sub-row     { grid-template-columns: 1fr auto auto; }
+  .sub-row     { grid-template-columns: minmax(0, 1fr) auto auto; }
   .sub-row__qos { grid-column: 1 / -1; color: var(--ink-3); font-size: 10px; }
-  .out-row     { grid-template-columns: auto 1fr auto; gap: 6px 12px; }
+  .out-row     { grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px 12px; }
   .out-row__contract,
   .out-row__calls,
   .out-row__p50,
   .out-row__qos { grid-column: 2 / -1; padding-left: 22px; font-size: 11px; }
   .policy-table__head,
-  .policy-table__row { grid-template-columns: 1fr 70px 70px; }
+  .policy-table__row { grid-template-columns: minmax(0, 1fr) 70px 70px; }
+}
+@media (max-width: 720px) {
+  .acp-runtime__row { grid-template-columns: 1fr; gap: 2px; }
 }
