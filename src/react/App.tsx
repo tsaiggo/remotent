@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { acp, useAcp } from '../acp/index.js';
+import { ACP_SESSION_ID, acpToSession } from '../acp/adapter.js';
 import { NODES } from '../data/nodes.js';
 import { SESSIONS } from '../data/sessions.js';
 import { NODE_PINS, state } from '../state/store.js';
@@ -30,6 +32,14 @@ export function App() {
   const [nodesRevision, setNodesRevision] = useState(0);
   const [pinned, setPinned] = useState<ReadonlySet<string>>(() => new Set(NODE_PINS));
   const [newNodeCounter, setNewNodeCounter] = useState(0);
+  const acpSnap = useAcp();
+  const acpSession = acpToSession(acpSnap);
+
+  const acpDelta = acpSnap.messages.reduce(
+    (sum, m) => sum + m.chunks.reduce((c, k) => c + k.text.length, 0),
+    0,
+  );
+  const effectiveRevision = revision + acpDelta;
 
   const selectSession = (id: string | null) => {
     state.currentSessionId = id;
@@ -41,12 +51,19 @@ export function App() {
     setCurrentNodeId(id);
   };
 
+  const isAcpSession = currentSessionId === ACP_SESSION_ID;
+
   const appendTurn = (turn: Turn) => {
     if (!currentSessionId) return;
+    if (isAcpSession) return;
     const s = SESSIONS[currentSessionId];
     if (!s) return;
     s.turns.push(turn);
     setRevision((n) => n + 1);
+  };
+
+  const submitAcpPrompt = (text: string) => {
+    void acp.sendPrompt(text);
   };
 
   const togglePin = (id: string) => {
@@ -98,15 +115,23 @@ export function App() {
     <>
       {sessionsEl &&
         createPortal(
-          <Sessions currentSessionId={currentSessionId} onSelectSession={selectSession} />,
+          <Sessions
+            currentSessionId={currentSessionId}
+            onSelectSession={selectSession}
+            acpStatus={acpSnap.status}
+            acpAgent={acpSnap.agent}
+          />,
           sessionsEl,
         )}
       {canvasEl &&
         createPortal(
           <Canvas
             currentSessionId={currentSessionId}
-            revision={revision}
+            revision={effectiveRevision}
             appendTurn={appendTurn}
+            isAcpSession={isAcpSession}
+            onAcpPrompt={submitAcpPrompt}
+            sessionOverride={isAcpSession ? acpSession : null}
           />,
           canvasEl,
         )}

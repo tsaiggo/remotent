@@ -115,6 +115,8 @@ const PinSvg = ({ filled }: { filled: boolean }) => (
 interface SessionsProps {
   currentSessionId: string | null;
   onSelectSession: (id: string) => void;
+  acpStatus: 'idle' | 'connecting' | 'connected' | 'error';
+  acpAgent: string;
 }
 
 interface DraftThread {
@@ -122,7 +124,14 @@ interface DraftThread {
   hhmm: string;
 }
 
-export function Sessions({ currentSessionId, onSelectSession }: SessionsProps) {
+const ACP_LIVE_ID = 'acp-live';
+
+export function Sessions({
+  currentSessionId,
+  onSelectSession,
+  acpStatus,
+  acpAgent,
+}: SessionsProps) {
   const [filter, setFilter] = useState<FilterKind>('all');
   const [drafts, setDrafts] = useState<DraftThread[]>([]);
   const [pinnedSet, setPinnedSet] = useState<Set<string>>(() => new Set(['orbital', 'q3-brief']));
@@ -222,6 +231,21 @@ export function Sessions({ currentSessionId, onSelectSession }: SessionsProps) {
           </button>
         ))}
       </nav>
+
+      {acpStatus !== 'idle' && (
+        <ThreadGroup label="Live · ACP">
+          <ul className="thread-list" role="list">
+            <AcpLiveThread
+              status={acpStatus}
+              agent={acpAgent}
+              active={currentSessionId === ACP_LIVE_ID}
+              onSelect={() => {
+                onSelectSession(ACP_LIVE_ID);
+              }}
+            />
+          </ul>
+        </ThreadGroup>
+      )}
 
       {pinnedView.length > 0 && (
         <ThreadGroup label="Pinned">
@@ -388,6 +412,58 @@ function Thread({ t, pinned, active, onSelect, onTogglePin }: ThreadProps) {
       >
         <PinSvg filled={pinned} />
       </button>
+    </li>
+  );
+}
+
+interface AcpLiveThreadProps {
+  status: 'idle' | 'connecting' | 'connected' | 'error';
+  agent: string;
+  active: boolean;
+  onSelect: () => void;
+}
+
+function AcpLiveThread({ status, agent, active, onSelect }: AcpLiveThreadProps) {
+  const dotClass =
+    status === 'connected'
+      ? 'is-live'
+      : status === 'connecting'
+        ? 'is-warn'
+        : status === 'error'
+          ? 'is-err'
+          : '';
+  const snippet =
+    status === 'connected'
+      ? 'Streaming over Agent Client Protocol.'
+      : status === 'connecting'
+        ? 'Handshaking with sidecar…'
+        : status === 'error'
+          ? 'Connection error — check `bun run server`.'
+          : 'Idle.';
+  return (
+    <li
+      className={`thread${active ? ' is-active' : ''}`}
+      data-kind="agent"
+      data-session-id="acp-live"
+      tabIndex={0}
+      onClick={onSelect}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
+    >
+      <span className={`thread__dot ${dotClass}`} aria-hidden="true"></span>
+      <div className="thread__body">
+        <div className="thread__row">
+          <span className="thread__title">{agent}</span>
+          <time className="thread__time">{status}</time>
+        </div>
+        <p className="thread__snippet">
+          <span className="tag tag--agent">acp</span> {snippet}
+        </p>
+      </div>
     </li>
   );
 }

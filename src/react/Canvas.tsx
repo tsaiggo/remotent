@@ -11,10 +11,21 @@ interface CanvasProps {
   currentSessionId: string | null;
   revision: number;
   appendTurn: (turn: TurnType) => void;
+  isAcpSession: boolean;
+  onAcpPrompt: (text: string) => void;
+  sessionOverride: Session | null;
 }
 
-export function Canvas({ currentSessionId, revision, appendTurn }: CanvasProps) {
-  const session: Session | undefined = currentSessionId ? SESSIONS[currentSessionId] : undefined;
+export function Canvas({
+  currentSessionId,
+  revision,
+  appendTurn,
+  isAcpSession,
+  onAcpPrompt,
+  sessionOverride,
+}: CanvasProps) {
+  const session: Session | undefined =
+    sessionOverride ?? (currentSessionId ? SESSIONS[currentSessionId] : undefined);
   const timelineRef = useRef<HTMLOListElement>(null);
   void revision;
 
@@ -103,7 +114,7 @@ export function Canvas({ currentSessionId, revision, appendTurn }: CanvasProps) 
         ))}
       </ol>
 
-      <Composer appendTurn={appendTurn} />
+      <Composer appendTurn={appendTurn} isAcpSession={isAcpSession} onAcpPrompt={onAcpPrompt} />
     </>
   );
 }

@@ -13,6 +13,9 @@ export default defineConfig({
     port: 5173,
     strictPort: false,
     open: false,
+    proxy: {
+      '/ws': { target: 'ws://localhost:5174', ws: true },
+    },
   },
   preview: {
     port: 4173,
