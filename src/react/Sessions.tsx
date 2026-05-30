@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   ACP_SESSION_ID,
   cwdBasename,
@@ -7,6 +7,7 @@ import {
   sessionDisplayTitle,
 } from '../acp/adapter.js';
 import type { AcpSessionInfo, AcpStatus } from '../acp/index.js';
+import { useIntersectionObserver } from './useIntersectionObserver.js';
 
 type FilterKind = 'all' | 'human' | 'agent';
 
@@ -43,8 +44,14 @@ export function Sessions({
   acpSessionsLoading,
   liveSessionId,
 }: SessionsProps) {
-  const [filter, setFilter] = useState<FilterKind>('all');
+  const [filterMode, setFilterMode] = useState<FilterKind>('all');
   const [pinnedSet, setPinnedSet] = useState<Set<string>>(() => loadPinned());
+  const [limit, setLimit] = useState(50);
+
+  const setFilter = (f: FilterKind) => {
+    setFilterMode(f);
+    setLimit(50);
+  };
 
   const togglePin = (id: string) => {
     setPinnedSet((prev) => {
@@ -59,7 +66,17 @@ export function Sessions({
   const visibleSessions = acpSessions.filter((s) => s.sessionId !== liveSessionId);
   const pinnedSessions = visibleSessions.filter((s) => pinnedSet.has(s.sessionId));
   const unpinnedSessions = visibleSessions.filter((s) => !pinnedSet.has(s.sessionId));
-  const groups = groupSessionsByDate(unpinnedSessions);
+
+  const slicedUnpinned = unpinnedSessions.slice(0, limit);
+  const hasMore = limit < unpinnedSessions.length;
+
+  const handleLoadMore = useCallback(() => {
+    setLimit((prev) => prev + 50);
+  }, []);
+
+  const loadMoreRef = useIntersectionObserver(handleLoadMore, { rootMargin: '200px' });
+
+  const groups = groupSessionsByDate(slicedUnpinned);
 
   const totalCount = visibleSessions.length;
   const isAcpLiveActive = currentSessionId === ACP_SESSION_ID;
@@ -100,9 +117,9 @@ export function Sessions({
           <button
             key={f}
             type="button"
-            className={`tabs__btn${filter === f ? ' is-active' : ''}`}
+            className={`tabs__btn${filterMode === f ? ' is-active' : ''}`}
             role="tab"
-            aria-selected={filter === f}
+            aria-selected={filterMode === f}
             data-filter={f}
             onClick={() => {
               setFilter(f);
@@ -131,11 +148,11 @@ export function Sessions({
         </ThreadGroup>
       )}
 
-      {filter === 'human' && (
+      {filterMode === 'human' && (
         <EmptyHint message="Human-only filter doesn't apply to opencode sessions. Switch to All or Agent." />
       )}
 
-      {filter !== 'human' && pinnedSessions.length > 0 && (
+      {filterMode !== 'human' && pinnedSessions.length > 0 && (
         <ThreadGroup label="Pinned">
           <ul className="thread-list" role="list">
             {pinnedSessions.map((s) => (
@@ -156,7 +173,7 @@ export function Sessions({
         </ThreadGroup>
       )}
 
-      {filter !== 'human' &&
+      {filterMode !== 'human' &&
         groups.map((g) => (
           <ThreadGroup key={g.bucket} label={g.label}>
             <ul className="thread-list" role="list">
@@ -178,10 +195,14 @@ export function Sessions({
           </ThreadGroup>
         ))}
 
+      {hasMore && filterMode !== 'human' && (
+        <div ref={loadMoreRef} style={{ height: 20, margin: '12px 0' }} aria-hidden="true" />
+      )}
+
       {acpStatus === 'connected' &&
         !acpSessionsLoading &&
         visibleSessions.length === 0 &&
-        filter !== 'human' && (
+        filterMode !== 'human' && (
           <EmptyHint message="No past sessions yet — start a new chat above." />
         )}
 

@@ -65,6 +65,6 @@ export default tseslint.config(
   },
   prettier,
   {
-    ignores: ['dist/**', '.vite/**', 'node_modules/**', 'assets/**'],
+    ignores: ['dist/**', '.vite/**', 'node_modules/**', 'assets/**', 'storybook-static/**'],
   },
 );
