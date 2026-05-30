@@ -1,6 +1,6 @@
 import { escapeHtml } from '../util/dom.js';
 import type { Session, Turn } from '../types/index.js';
-import type { AcpMessage, AcpSnapshot } from './client.js';
+import type { AcpMessage, AcpSessionInfo, AcpSnapshot } from './client.js';
 
 export const ACP_SESSION_ID = 'acp-live';
 
@@ -63,4 +63,97 @@ export function acpToSession(snap: AcpSnapshot): Session {
     nodes: [],
     turns: snap.messages.map(acpMessageToTurn),
   };
+}
+
+export type SessionBucket = 'today' | 'yesterday' | 'thisWeek' | 'pastWeek' | 'older';
+
+export interface SessionGroup {
+  bucket: SessionBucket;
+  label: string;
+  sessions: AcpSessionInfo[];
+}
+
+const BUCKET_LABELS: Record<SessionBucket, string> = {
+  today: 'Today',
+  yesterday: 'Yesterday',
+  thisWeek: 'This Week',
+  pastWeek: 'Past Week',
+  older: 'Older',
+};
+
+const BUCKET_ORDER: SessionBucket[] = ['today', 'yesterday', 'thisWeek', 'pastWeek', 'older'];
+
+function dateBucket(updatedMs: number, nowMs: number): SessionBucket {
+  const startOfDay = (ms: number): number => {
+    const d = new Date(ms);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+  };
+  const today = startOfDay(nowMs);
+  const oneDay = 24 * 60 * 60 * 1000;
+  const sessionDay = startOfDay(updatedMs);
+  const dayDiff = Math.round((today - sessionDay) / oneDay);
+  if (dayDiff <= 0) return 'today';
+  if (dayDiff === 1) return 'yesterday';
+  if (dayDiff < 7) return 'thisWeek';
+  if (dayDiff < 14) return 'pastWeek';
+  return 'older';
+}
+
+export function groupSessionsByDate(
+  sessions: readonly AcpSessionInfo[],
+  nowMs: number = Date.now(),
+): SessionGroup[] {
+  const buckets = new Map<SessionBucket, AcpSessionInfo[]>();
+  for (const s of sessions) {
+    const ts = s.updatedAt ? new Date(s.updatedAt).getTime() : 0;
+    if (!Number.isFinite(ts) || ts === 0) continue;
+    const bucket = dateBucket(ts, nowMs);
+    const list = buckets.get(bucket) ?? [];
+    list.push(s);
+    buckets.set(bucket, list);
+  }
+  const groups: SessionGroup[] = [];
+  for (const bucket of BUCKET_ORDER) {
+    const list = buckets.get(bucket);
+    if (!list || list.length === 0) continue;
+    const sorted = list.slice().sort((a, b) => {
+      const ta = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+      const tb = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+      return tb - ta;
+    });
+    groups.push({ bucket, label: BUCKET_LABELS[bucket], sessions: sorted });
+  }
+  return groups;
+}
+
+export function formatRelativeTime(iso: string | null, nowMs: number = Date.now()): string {
+  if (!iso) return '';
+  const ts = new Date(iso).getTime();
+  if (!Number.isFinite(ts)) return '';
+  const diffMs = Math.max(0, nowMs - ts);
+  const minutes = Math.round(diffMs / 60_000);
+  if (minutes < 60) return `${String(Math.max(1, minutes))}m`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${String(hours)}h`;
+  const days = Math.round(hours / 24);
+  if (days < 7) return `${String(days)}d`;
+  const weeks = Math.round(days / 7);
+  if (weeks < 4) return `${String(weeks)}w`;
+  const months = Math.round(days / 30);
+  return `${String(months)}mo`;
+}
+
+export function cwdBasename(cwd: string): string {
+  const trimmed = cwd.replace(/\/+$/, '');
+  if (!trimmed || trimmed === '/') return '/';
+  const last = trimmed.split('/').pop();
+  return last ?? cwd;
+}
+
+const DEFAULT_TITLE_RE = /^(New|Child) session - /;
+
+export function sessionDisplayTitle(s: AcpSessionInfo): string {
+  if (s.title && !DEFAULT_TITLE_RE.test(s.title)) return s.title;
+  return `Session ${s.sessionId.slice(4, 12)}`;
 }

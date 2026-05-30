@@ -164,6 +164,10 @@
   animation: pulse 2s var(--tap) infinite;
 }
 .thread__dot.is-warn { background: var(--warn); }
+.thread__dot.is-err {
+  background: var(--err, #d6485a);
+  box-shadow: 0 0 0 3px rgba(214, 72, 90, 0.18);
+}
 
 .thread__body { min-width: 0; }
 .thread__row {
@@ -221,4 +225,5 @@
 .tag--design   { background: var(--purple-soft); color: var(--purple-ink); }
 .tag--research { background: var(--blue-soft);   color: var(--blue-ink); }
 .tag--human    { background: var(--orange-soft); color: var(--orange-ink); }
+.tag--agent    { background: var(--blue-soft);   color: var(--blue-ink); }
 

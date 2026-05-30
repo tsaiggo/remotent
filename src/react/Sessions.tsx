@@ -1,166 +1,68 @@
 import { useState } from 'react';
-
-type ThreadKind = 'human' | 'agent';
-type DotState = '' | 'is-live' | 'is-warn';
-
-interface Tag {
-  label: string;
-  kind: string;
-}
-
-interface ThreadMeta {
-  id: string;
-  kind: ThreadKind;
-  pinned?: boolean;
-  dot: DotState;
-  title: string;
-  time: string;
-  tags: Tag[];
-  snippet?: string;
-  emText?: string;
-}
-
-const PINNED_THREADS: ThreadMeta[] = [
-  {
-    id: 'orbital',
-    kind: 'agent',
-    pinned: true,
-    dot: 'is-live',
-    title: 'Orbital telemetry refactor',
-    time: '02:14',
-    tags: [
-      { label: 'dev', kind: 'dev' },
-      { label: 'design', kind: 'design' },
-    ],
-    emText: '3 agents streaming · 14 turns',
-  },
-  {
-    id: 'q3-brief',
-    kind: 'human',
-    pinned: true,
-    dot: '',
-    title: 'Q3 research brief — Wen',
-    time: 'Yesterday',
-    tags: [{ label: 'human', kind: 'human' }],
-    snippet: 'Draft outline approved, awaiting citations.',
-  },
-];
-
-const TODAY_THREADS: ThreadMeta[] = [
-  {
-    id: 'design-audit',
-    kind: 'agent',
-    dot: 'is-warn',
-    title: 'Design system audit',
-    time: '11:02',
-    tags: [{ label: 'design', kind: 'design' }],
-    snippet: 'Awaiting human review on token diff.',
-  },
-  {
-    id: 'citation-crawler',
-    kind: 'agent',
-    dot: '',
-    title: 'Citation crawler · arxiv-2411',
-    time: '09:47',
-    tags: [{ label: 'research', kind: 'research' }],
-    snippet: '142 sources indexed.',
-  },
-  {
-    id: 'pair-hana',
-    kind: 'human',
-    dot: '',
-    title: 'Pair review — Hana',
-    time: '08:30',
-    tags: [{ label: 'human', kind: 'human' }],
-    snippet: '"Let\u2019s revisit the routing layer tomorrow."',
-  },
-];
-
-const EARLIER_THREADS: ThreadMeta[] = [
-  {
-    id: 'build-triage',
-    kind: 'agent',
-    dot: '',
-    title: 'Build pipeline triage',
-    time: 'Mon',
-    tags: [{ label: 'dev', kind: 'dev' }],
-    snippet: 'Resolved · 4 patches merged.',
-  },
-  {
-    id: 'onboarding-mira',
-    kind: 'human',
-    dot: '',
-    title: 'Onboarding — Mira',
-    time: 'Sun',
-    tags: [{ label: 'human', kind: 'human' }],
-    snippet: 'Access provisioned, welcome doc sent.',
-  },
-];
+import {
+  ACP_SESSION_ID,
+  cwdBasename,
+  formatRelativeTime,
+  groupSessionsByDate,
+  sessionDisplayTitle,
+} from '../acp/adapter.js';
+import type { AcpSessionInfo, AcpStatus } from '../acp/index.js';
 
 type FilterKind = 'all' | 'human' | 'agent';
-
-const PinSvg = ({ filled }: { filled: boolean }) => (
-  <svg
-    viewBox="0 0 24 24"
-    width="12"
-    height="12"
-    fill={filled ? 'currentColor' : 'none'}
-    stroke="currentColor"
-    strokeWidth="1.4"
-  >
-    <path d="M14 2l8 8-5 1-4 4-1 5-2-2-5 5-1-1 5-5-2-2 5-1 4-4z" />
-  </svg>
-);
 
 interface SessionsProps {
   currentSessionId: string | null;
   onSelectSession: (id: string) => void;
-  acpStatus: 'idle' | 'connecting' | 'connected' | 'error';
+  acpStatus: AcpStatus;
   acpAgent: string;
+  acpSessions: AcpSessionInfo[];
+  acpSessionsLoading: boolean;
+  liveSessionId: string | null;
 }
 
-interface DraftThread {
-  id: string;
-  hhmm: string;
-}
-
-const ACP_LIVE_ID = 'acp-live';
+const PinSvg = ({ filled }: { filled: boolean }) => (
+  <svg
+    viewBox="0 0 24 24"
+    width="11"
+    height="11"
+    fill={filled ? 'currentColor' : 'none'}
+    stroke="currentColor"
+    strokeWidth="1.4"
+    aria-hidden="true"
+  >
+    <path d="M14 2l8 8-5 1-4 4-1 5-2-2-5 5-1-1 5-5-2-2 5-1 4-4z" />
+  </svg>
+);
 
 export function Sessions({
   currentSessionId,
   onSelectSession,
   acpStatus,
   acpAgent,
+  acpSessions,
+  acpSessionsLoading,
+  liveSessionId,
 }: SessionsProps) {
   const [filter, setFilter] = useState<FilterKind>('all');
-  const [drafts, setDrafts] = useState<DraftThread[]>([]);
-  const [pinnedSet, setPinnedSet] = useState<Set<string>>(() => new Set(['orbital', 'q3-brief']));
+  const [pinnedSet, setPinnedSet] = useState<Set<string>>(() => loadPinned());
 
   const togglePin = (id: string) => {
     setPinnedSet((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
+      savePinned(next);
       return next;
     });
   };
 
-  const isVisible = (t: ThreadMeta): boolean => filter === 'all' || filter === t.kind;
+  const visibleSessions = acpSessions.filter((s) => s.sessionId !== liveSessionId);
+  const pinnedSessions = visibleSessions.filter((s) => pinnedSet.has(s.sessionId));
+  const unpinnedSessions = visibleSessions.filter((s) => !pinnedSet.has(s.sessionId));
+  const groups = groupSessionsByDate(unpinnedSessions);
 
-  const allThreads = [...PINNED_THREADS, ...TODAY_THREADS, ...EARLIER_THREADS];
-  const pinnedView = allThreads.filter((t) => pinnedSet.has(t.id));
-  const unpinned = allThreads.filter((t) => !pinnedSet.has(t.id));
-  const todayView = unpinned.filter((t) => TODAY_THREADS.some((x) => x.id === t.id));
-  const earlierView = unpinned.filter((t) => EARLIER_THREADS.some((x) => x.id === t.id));
-
-  const handleNewSession = () => {
-    const now = new Date();
-    const hh = String(now.getHours()).padStart(2, '0');
-    const mm = String(now.getMinutes()).padStart(2, '0');
-    const id = `draft-${String(Date.now())}-${String(drafts.length + 1)}`;
-    setDrafts((prev) => [...prev, { id, hhmm: `${hh}:${mm}` }]);
-    onSelectSession(id);
-  };
+  const totalCount = visibleSessions.length;
+  const isAcpLiveActive = currentSessionId === ACP_SESSION_ID;
 
   return (
     <>
@@ -174,26 +76,6 @@ export function Sessions({
             Multi-Agent Console <span className="sep">·</span> ACP v0.2
           </p>
         </div>
-
-        <button
-          className="sessions__new"
-          id="newSessionBtn"
-          type="button"
-          aria-label="New session"
-          onClick={handleNewSession}
-        >
-          <svg
-            viewBox="0 0 24 24"
-            width="14"
-            height="14"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.4"
-          >
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          <span>New</span>
-        </button>
       </header>
 
       <div className="sessions__search">
@@ -227,7 +109,9 @@ export function Sessions({
             }}
           >
             {f === 'all' ? 'All' : f === 'human' ? 'Human' : 'Agent'}{' '}
-            <span className="tabs__count">{f === 'all' ? '24' : f === 'human' ? '07' : '17'}</span>
+            <span className="tabs__count">
+              {f === 'all' ? String(totalCount).padStart(2, '0') : '00'}
+            </span>
           </button>
         ))}
       </nav>
@@ -238,29 +122,30 @@ export function Sessions({
             <AcpLiveThread
               status={acpStatus}
               agent={acpAgent}
-              active={currentSessionId === ACP_LIVE_ID}
+              active={isAcpLiveActive}
               onSelect={() => {
-                onSelectSession(ACP_LIVE_ID);
+                onSelectSession(ACP_SESSION_ID);
               }}
             />
           </ul>
         </ThreadGroup>
       )}
 
-      {pinnedView.length > 0 && (
+      {filter === 'human' && (
+        <EmptyHint message="Human-only filter doesn't apply to opencode sessions. Switch to All or Agent." />
+      )}
+
+      {filter !== 'human' && pinnedSessions.length > 0 && (
         <ThreadGroup label="Pinned">
           <ul className="thread-list" role="list">
-            {pinnedView.filter(isVisible).map((t) => (
-              <Thread
-                key={t.id}
-                t={t}
+            {pinnedSessions.map((s) => (
+              <SessionThread
+                key={s.sessionId}
+                session={s}
                 pinned
-                active={t.id === currentSessionId}
-                onSelect={() => {
-                  onSelectSession(t.id);
-                }}
+                active={currentSessionId === s.sessionId}
                 onTogglePin={() => {
-                  togglePin(t.id);
+                  togglePin(s.sessionId);
                 }}
               />
             ))}
@@ -268,82 +153,41 @@ export function Sessions({
         </ThreadGroup>
       )}
 
-      <ThreadGroup label="Today">
-        <ul className="thread-list" id="todayList" role="list">
-          {todayView.filter(isVisible).map((t) => (
-            <Thread
-              key={t.id}
-              t={t}
-              pinned={false}
-              active={t.id === currentSessionId}
-              onSelect={() => {
-                onSelectSession(t.id);
-              }}
-              onTogglePin={() => {
-                togglePin(t.id);
-              }}
-            />
-          ))}
-          {drafts.map((d) => (
-            <li
-              key={d.id}
-              className={`thread${d.id === currentSessionId ? ' is-active' : ''}`}
-              data-kind="agent"
-              data-session-id={d.id}
-              tabIndex={0}
-              onClick={() => {
-                onSelectSession(d.id);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onSelectSession(d.id);
-                }
-              }}
-            >
-              <span className="thread__dot" aria-hidden="true"></span>
-              <div className="thread__body">
-                <div className="thread__row">
-                  <span className="thread__title">New session</span>
-                  <time className="thread__time">{d.hhmm}</time>
-                </div>
-                <p className="thread__snippet">
-                  <em>Draft · awaiting first turn.</em>
-                </p>
-              </div>
-              <button
-                className="thread__pin"
-                type="button"
-                aria-label="Pin"
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
-              >
-                <PinSvg filled={false} />
-              </button>
-            </li>
-          ))}
-        </ul>
-      </ThreadGroup>
+      {filter !== 'human' &&
+        groups.map((g) => (
+          <ThreadGroup key={g.bucket} label={g.label}>
+            <ul className="thread-list" role="list">
+              {g.sessions.map((s) => (
+                <SessionThread
+                  key={s.sessionId}
+                  session={s}
+                  pinned={false}
+                  active={currentSessionId === s.sessionId}
+                  onTogglePin={() => {
+                    togglePin(s.sessionId);
+                  }}
+                />
+              ))}
+            </ul>
+          </ThreadGroup>
+        ))}
 
-      <ThreadGroup label="Earlier this week">
-        <ul className="thread-list" role="list">
-          {earlierView.filter(isVisible).map((t) => (
-            <Thread
-              key={t.id}
-              t={t}
-              pinned={false}
-              active={t.id === currentSessionId}
-              onSelect={() => {
-                onSelectSession(t.id);
-              }}
-              onTogglePin={() => {
-                togglePin(t.id);
-              }}
-            />
-          ))}
-        </ul>
-      </ThreadGroup>
+      {acpStatus === 'connected' &&
+        !acpSessionsLoading &&
+        visibleSessions.length === 0 &&
+        filter !== 'human' && (
+          <EmptyHint message="No past sessions yet — start a new chat above." />
+        )}
+
+      {(acpStatus === 'idle' || acpStatus === 'error') && (
+        <EmptyHint
+          message={
+            acpStatus === 'error'
+              ? 'Sidecar error. Run `bun run server` to see your opencode sessions here.'
+              : 'Sidecar offline. Run `bun run server` to see your opencode sessions here.'
+          }
+        />
+      )}
     </>
   );
 }
@@ -360,44 +204,50 @@ function ThreadGroup({ label, children }: { label: string; children: React.React
   );
 }
 
-interface ThreadProps {
-  t: ThreadMeta;
+function EmptyHint({ message }: { message: string }) {
+  return (
+    <p
+      style={{
+        color: 'var(--ink-2, #888)',
+        font: '12px/1.5 var(--font-sans, system-ui)',
+        margin: '12px 16px',
+        padding: '12px',
+        border: '1px dashed var(--rule, #e5e5e5)',
+        borderRadius: '6px',
+      }}
+    >
+      {message}
+    </p>
+  );
+}
+
+interface SessionThreadProps {
+  session: AcpSessionInfo;
   pinned: boolean;
   active: boolean;
-  onSelect: () => void;
   onTogglePin: () => void;
 }
 
-function Thread({ t, pinned, active, onSelect, onTogglePin }: ThreadProps) {
+function SessionThread({ session, pinned, active, onTogglePin }: SessionThreadProps) {
+  const title = sessionDisplayTitle(session);
+  const time = formatRelativeTime(session.updatedAt);
+  const project = cwdBasename(session.cwd);
   return (
     <li
       className={`thread${active ? ' is-active' : ''}`}
-      data-kind={t.kind}
-      data-pinned={pinned ? 'true' : undefined}
-      data-session-id={t.id}
-      tabIndex={0}
-      onClick={onSelect}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onSelect();
-        }
-      }}
+      data-kind="agent"
+      data-session-id={session.sessionId}
+      title={`${session.sessionId} · ${session.cwd}`}
+      style={{ cursor: 'default', opacity: 0.92 }}
     >
-      <span className={`thread__dot${t.dot ? ` ${t.dot}` : ''}`} aria-hidden="true"></span>
+      <span className="thread__dot" aria-hidden="true"></span>
       <div className="thread__body">
         <div className="thread__row">
-          <span className="thread__title">{t.title}</span>
-          <time className="thread__time">{t.time}</time>
+          <span className="thread__title">{title}</span>
+          <time className="thread__time">{time}</time>
         </div>
         <p className="thread__snippet">
-          {t.tags.map((tag) => (
-            <span key={tag.label} className={`tag tag--${tag.kind}`}>
-              {tag.label}
-            </span>
-          ))}{' '}
-          {t.snippet}
-          {t.emText !== undefined && <em>{t.emText}</em>}
+          <span className="tag tag--dev">{project}</span> <em>History · resume coming soon.</em>
         </p>
       </div>
       <button
@@ -417,7 +267,7 @@ function Thread({ t, pinned, active, onSelect, onTogglePin }: ThreadProps) {
 }
 
 interface AcpLiveThreadProps {
-  status: 'idle' | 'connecting' | 'connected' | 'error';
+  status: AcpStatus;
   agent: string;
   active: boolean;
   onSelect: () => void;
@@ -444,7 +294,7 @@ function AcpLiveThread({ status, agent, active, onSelect }: AcpLiveThreadProps) 
     <li
       className={`thread${active ? ' is-active' : ''}`}
       data-kind="agent"
-      data-session-id="acp-live"
+      data-session-id={ACP_SESSION_ID}
       tabIndex={0}
       onClick={onSelect}
       onKeyDown={(e) => {
@@ -466,4 +316,28 @@ function AcpLiveThread({ status, agent, active, onSelect }: AcpLiveThreadProps) 
       </div>
     </li>
   );
+}
+
+const PINNED_STORAGE_KEY = 'remotent.acp.pinnedSessions';
+
+function loadPinned(): Set<string> {
+  if (typeof localStorage === 'undefined') return new Set();
+  try {
+    const raw = localStorage.getItem(PINNED_STORAGE_KEY);
+    if (!raw) return new Set();
+    const arr: unknown = JSON.parse(raw);
+    if (!Array.isArray(arr)) return new Set();
+    return new Set(arr.filter((x): x is string => typeof x === 'string'));
+  } catch {
+    return new Set();
+  }
+}
+
+function savePinned(set: Set<string>) {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(PINNED_STORAGE_KEY, JSON.stringify([...set]));
+  } catch {
+    /* quota / private mode */
+  }
 }

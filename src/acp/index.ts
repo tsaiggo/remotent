@@ -6,4 +6,10 @@ export function useAcp(): AcpSnapshot {
 }
 
 export { acp } from './client.js';
-export type { AcpMessage, AcpMessageChunk, AcpSnapshot, AcpStatus } from './client.js';
+export type {
+  AcpMessage,
+  AcpMessageChunk,
+  AcpSessionInfo,
+  AcpSnapshot,
+  AcpStatus,
+} from './client.js';

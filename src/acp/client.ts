@@ -28,17 +28,29 @@ export interface AcpMessage {
   createdAt: number;
 }
 
+export interface AcpSessionInfo {
+  sessionId: string;
+  cwd: string;
+  title: string | null;
+  updatedAt: string | null;
+}
+
 export interface AcpSnapshot {
   status: AcpStatus;
   error: string | null;
   agent: string;
   sessionId: string | null;
   messages: AcpMessage[];
+  sessions: AcpSessionInfo[];
+  sessionsLoading: boolean;
 }
 
 type Listener = () => void;
 
 const wsUrl = (): string => {
+  if (window.location.hostname === 'localhost' && window.location.port === '5173') {
+    return 'ws://localhost:5174/ws';
+  }
   const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   return `${proto}//${window.location.host}/ws`;
 };
@@ -85,6 +97,8 @@ class AcpClient implements Pick<Agent, never> {
     agent: 'opencode acp',
     sessionId: null,
     messages: [],
+    sessions: [],
+    sessionsLoading: false,
   };
   private pendingUserPrompts: string[] = [];
 
@@ -168,6 +182,7 @@ class AcpClient implements Pick<Agent, never> {
     });
 
     try {
+      console.log('[acp] initialize → sending');
       await conn.initialize({
         protocolVersion: 1,
         clientCapabilities: {
@@ -175,11 +190,14 @@ class AcpClient implements Pick<Agent, never> {
           terminal: false,
         },
       });
+      console.log('[acp] initialize ← ok, sending session/new');
       const sessionRes = await conn.newSession({
         cwd: '/',
         mcpServers: [],
       });
+      console.log('[acp] session/new ← ok', sessionRes);
       this.update({ status: 'connected', sessionId: sessionRes.sessionId, messages: [] });
+      void this.refreshSessions();
 
       while (this.pendingUserPrompts.length > 0) {
         const text = this.pendingUserPrompts.shift();
@@ -188,6 +206,24 @@ class AcpClient implements Pick<Agent, never> {
     } catch (e) {
       this.update({ status: 'error', error: String(e) });
       throw e;
+    }
+  }
+
+  async refreshSessions(): Promise<void> {
+    if (!this.conn) return;
+    this.update({ sessionsLoading: true });
+    try {
+      const res = await this.conn.listSessions({});
+      const sessions: AcpSessionInfo[] = res.sessions.map((s) => ({
+        sessionId: s.sessionId,
+        cwd: s.cwd,
+        title: s.title ?? null,
+        updatedAt: s.updatedAt ?? null,
+      }));
+      this.update({ sessions, sessionsLoading: false });
+    } catch (e) {
+      console.warn('[acp] listSessions failed', e);
+      this.update({ sessionsLoading: false });
     }
   }
 
@@ -209,6 +245,7 @@ class AcpClient implements Pick<Agent, never> {
         sessionId: this.snapshot.sessionId,
         prompt: [{ type: 'text', text }],
       });
+      void this.refreshSessions();
     } catch (e) {
       this.update({ error: `prompt failed: ${String(e)}` });
     }
@@ -245,13 +282,8 @@ class AcpClient implements Pick<Agent, never> {
         }
         break;
       }
-      case 'agent_thought_chunk': {
-        const content = upd.content;
-        if (content.type !== 'text') break;
-        const m = ensureStreamingAgent();
-        m.chunks.push({ type: 'thought', text: content.text });
+      case 'agent_thought_chunk':
         break;
-      }
       case 'tool_call': {
         const m = ensureStreamingAgent();
         const chunk: AcpMessageChunk = {

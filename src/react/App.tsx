@@ -120,6 +120,9 @@ export function App() {
             onSelectSession={selectSession}
             acpStatus={acpSnap.status}
             acpAgent={acpSnap.agent}
+            acpSessions={acpSnap.sessions}
+            acpSessionsLoading={acpSnap.sessionsLoading}
+            liveSessionId={acpSnap.sessionId}
           />,
           sessionsEl,
         )}

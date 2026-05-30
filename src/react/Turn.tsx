@@ -17,8 +17,11 @@ export function Turn({ turn }: TurnProps) {
   const liveClockRef = useRef<HTMLTimeElement>(null);
   const streamTextRef = useRef<HTMLSpanElement>(null);
 
+  const hasRealText = turn.text !== undefined && turn.text !== '';
+  const useMockStreamAnim = turn.streaming === true && !hasRealText;
+
   useEffect(() => {
-    if (!turn.streaming) return;
+    if (!useMockStreamAnim) return;
     const clockTimer = setInterval(() => {
       if (liveClockRef.current) liveClockRef.current.textContent = nowClock();
     }, 1000);
@@ -52,7 +55,7 @@ export function Turn({ turn }: TurnProps) {
       clearInterval(clockTimer);
       clearInterval(streamTimer);
     };
-  }, [turn.streaming]);
+  }, [useMockStreamAnim]);
 
   const node = turn.node ?? '';
   const avatarSrc = isHuman
@@ -99,16 +102,17 @@ export function Turn({ turn }: TurnProps) {
             </span>
           )}
         </header>
-        {turn.streaming ? (
+        {useMockStreamAnim ? (
           <p className={proseClass} id="streamText">
             <span ref={streamTextRef}></span>
             <span className="caret">▍</span>
           </p>
-        ) : (
-          turn.text !== undefined && (
-            <p className={proseClass} dangerouslySetInnerHTML={{ __html: turn.text }} />
-          )
-        )}
+        ) : hasRealText ? (
+          <p className={proseClass}>
+            <span dangerouslySetInnerHTML={{ __html: turn.text ?? '' }} />
+            {turn.streaming === true && <span className="caret">▍</span>}
+          </p>
+        ) : null}
         {turn.terminal && turn.terminal.length > 0 && (
           <pre className="terminal" aria-label={`${turn.who} terminal`}>
             {turn.terminal.map((seg, i) => (

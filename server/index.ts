@@ -27,6 +27,7 @@ function spawnAgent(ws: ServerWebSocket<unknown>): Bridge {
       const line = bridge.stdoutBuffer.slice(0, nl).trim();
       bridge.stdoutBuffer = bridge.stdoutBuffer.slice(nl + 1);
       if (!line) continue;
+      console.error('[opencode→ws]', line.slice(0, 200));
       ws.send(line);
     }
   });
@@ -74,6 +75,7 @@ const server = Bun.serve({
       const bridge = bridges.get(ws);
       if (!bridge) return;
       const line = typeof msg === 'string' ? msg : new TextDecoder().decode(msg);
+      console.error('[ws→opencode]', line.slice(0, 200));
       bridge.child.stdin?.write(line + '\n');
     },
     close(ws) {
