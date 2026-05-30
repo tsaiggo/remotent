@@ -11,6 +11,18 @@ const formatTime = (ts: number): string => {
   return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 };
 
+function sanitizeUserPrompt(raw: string): string {
+  let cleaned = raw;
+  cleaned = cleaned.replace(/<system-reminder>[\s\S]*?<\/system-reminder>\s*/gi, '');
+  cleaned = cleaned.replace(
+    /<!-- OMO_INTERNAL_INITIATOR -->[\s\S]*?(?:Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed\.?)\s*/gi,
+    '',
+  );
+  cleaned = cleaned.replace(/<!-- OMO_INTERNAL_INITIATOR -->\s*/gi, '');
+  cleaned = cleaned.replace(/\[Pasted ~?[^<\]]*(?=<|$)/gi, '');
+  return cleaned.trim();
+}
+
 function acpMessageToTurn(msg: AcpMessage): Turn {
   if (msg.role === 'user') {
     const text = msg.chunks.map((c) => c.text).join('');
@@ -19,7 +31,7 @@ function acpMessageToTurn(msg: AcpMessage): Turn {
       who: 'You',
       role: 'human',
       time: formatTime(msg.createdAt),
-      text: escapeHtml(text),
+      text: escapeHtml(sanitizeUserPrompt(text)),
     };
   }
   const textChunks = msg.chunks.filter((c) => c.type === 'agent');
