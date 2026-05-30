@@ -32,9 +32,11 @@ const AGENT_REPLIES: Turn[] = [
 
 interface ComposerProps {
   appendTurn: (turn: Turn) => void;
+  isAcpSession: boolean;
+  onAcpPrompt: (text: string) => void;
 }
 
-export function Composer({ appendTurn }: ComposerProps) {
+export function Composer({ appendTurn, isAcpSession, onAcpPrompt }: ComposerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [value, setValue] = useState('');
 
@@ -56,6 +58,11 @@ export function Composer({ appendTurn }: ComposerProps) {
     e.preventDefault();
     const text = value.trim();
     if (!text) return;
+    setValue('');
+    if (isAcpSession) {
+      onAcpPrompt(text);
+      return;
+    }
     appendTurn({
       kind: 'human',
       who: 'Wen',
@@ -63,7 +70,6 @@ export function Composer({ appendTurn }: ComposerProps) {
       time: nowClock(),
       text,
     });
-    setValue('');
     const reply = AGENT_REPLIES[Math.floor(Math.random() * AGENT_REPLIES.length)];
     if (!reply) return;
     setTimeout(() => {

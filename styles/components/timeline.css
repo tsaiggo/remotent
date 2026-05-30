@@ -20,3 +20,28 @@
   border-radius: 5px;
   border: 2px solid var(--bg);
 }
+
+.timeline__load-older {
+  display: flex;
+  justify-content: center;
+  margin: 2px 0 14px;
+}
+.timeline__load-older button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  color: var(--ink-2);
+  background: var(--bg-2);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  transition: background .12s var(--tap), color .12s var(--tap);
+}
+.timeline__load-older button:hover {
+  color: var(--ink);
+  background: var(--bg-3);
+}
+.timeline__load-older span {
+  color: var(--ink-3);
+  font-size: 11px;
+}
