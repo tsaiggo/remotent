@@ -150,7 +150,17 @@
   transition: background .08s var(--tap);
 }
 .thread:hover { background: var(--hover); }
-.thread.is-active { background: var(--hover-2); }
+.thread.is-active { background: var(--press); }
+.thread.is-active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  background: var(--ink);
+  border-radius: 0 3px 3px 0;
+}
 
 .thread__dot {
   width: 6px; height: 6px; margin-top: 8px;
@@ -180,7 +190,9 @@
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   letter-spacing: -0.003em;
 }
-.thread.is-active .thread__title { font-weight: 500; }
+.thread.is-active .thread__title { 
+  font-weight: 600; 
+}
 .thread__time {
   font-family: var(--sans);
   font-size: 11px;
