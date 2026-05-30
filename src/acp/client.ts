@@ -22,6 +22,7 @@ export interface AcpMessageChunk {
 
 export interface AcpMessage {
   id: string;
+  messageId: string | null;
   role: 'user' | 'agent';
   chunks: AcpMessageChunk[];
   streaming: boolean;
@@ -262,6 +263,7 @@ class AcpClient implements Pick<Agent, never> {
     }
     const userMessage: AcpMessage = {
       id: `user-${String(Date.now())}`,
+      messageId: null,
       role: 'user',
       chunks: [{ type: 'user', text }],
       streaming: false,
@@ -282,13 +284,24 @@ class AcpClient implements Pick<Agent, never> {
   private onSessionUpdate(params: SessionNotification): void {
     const upd = params.update;
     const msgs = this.snapshot.messages.slice();
-    const last = msgs[msgs.length - 1];
 
-    const ensureStreamingAgent = (): AcpMessage => {
-      if (last?.role === 'agent' && last.streaming) return last;
+    const ensureStreamingMessage = (
+      role: 'user' | 'agent',
+      messageId: string | null,
+    ): AcpMessage => {
+      const last = msgs[msgs.length - 1];
+      if (
+        last?.role === role &&
+        last.streaming &&
+        (last.messageId ?? null) === (messageId ?? null)
+      ) {
+        return last;
+      }
+      if (last?.streaming) last.streaming = false;
       const fresh: AcpMessage = {
-        id: `agent-${String(Date.now())}-${String(msgs.length)}`,
-        role: 'agent',
+        id: messageId ?? `${role}-${String(Date.now())}-${String(msgs.length)}`,
+        messageId,
+        role,
         chunks: [],
         streaming: true,
         createdAt: Date.now(),
@@ -298,10 +311,22 @@ class AcpClient implements Pick<Agent, never> {
     };
 
     switch (upd.sessionUpdate) {
+      case 'user_message_chunk': {
+        const content = upd.content;
+        if (content.type !== 'text') break;
+        const m = ensureStreamingMessage('user', upd.messageId ?? null);
+        const lastChunk = m.chunks[m.chunks.length - 1];
+        if (lastChunk?.type === 'user') {
+          lastChunk.text += content.text;
+        } else {
+          m.chunks.push({ type: 'user', text: content.text });
+        }
+        break;
+      }
       case 'agent_message_chunk': {
         const content = upd.content;
         if (content.type !== 'text') break;
-        const m = ensureStreamingAgent();
+        const m = ensureStreamingMessage('agent', upd.messageId ?? null);
         const lastChunk = m.chunks[m.chunks.length - 1];
         if (lastChunk?.type === 'agent') {
           lastChunk.text += content.text;
@@ -313,7 +338,7 @@ class AcpClient implements Pick<Agent, never> {
       case 'agent_thought_chunk':
         break;
       case 'tool_call': {
-        const m = ensureStreamingAgent();
+        const m = ensureStreamingMessage('agent', null);
         const chunk: AcpMessageChunk = {
           type: 'tool',
           text: upd.title ?? upd.toolCallId,
@@ -325,14 +350,17 @@ class AcpClient implements Pick<Agent, never> {
         break;
       }
       case 'tool_call_update': {
-        const m = ensureStreamingAgent();
-        const chunk = m.chunks.find((c) => c.toolId === upd.toolCallId);
-        if (chunk && typeof upd.status === 'string') {
-          chunk.toolStatus = upd.status;
+        for (const m of msgs) {
+          const chunk = m.chunks.find((c) => c.toolId === upd.toolCallId);
+          if (chunk && typeof upd.status === 'string') {
+            chunk.toolStatus = upd.status;
+            break;
+          }
         }
         break;
       }
       default:
+        console.warn('[acp] unhandled sessionUpdate', upd.sessionUpdate);
         break;
     }
     this.update({ messages: msgs });

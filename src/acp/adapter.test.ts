@@ -171,4 +171,33 @@ describe('acpToSession', () => {
     });
     expect(s.lede).toContain('ses_unknown1234');
   });
+
+  test('regression: a replayed user_message_chunk renders as a human turn', () => {
+    const s = acpToSession({
+      ...baseSnap,
+      messages: [
+        {
+          id: 'msg_user_1',
+          messageId: 'msg_user_1',
+          role: 'user',
+          chunks: [{ type: 'user', text: 'What is the meaning of life?' }],
+          streaming: false,
+          createdAt: 1717_000_000_000,
+        },
+        {
+          id: 'msg_agent_1',
+          messageId: 'msg_agent_1',
+          role: 'agent',
+          chunks: [{ type: 'agent', text: '42.' }],
+          streaming: false,
+          createdAt: 1717_000_001_000,
+        },
+      ],
+    });
+    expect(s.turns).toHaveLength(2);
+    expect(s.turns[0]?.kind).toBe('human');
+    expect(s.turns[0]?.text).toContain('What is the meaning of life?');
+    expect(s.turns[1]?.kind).toBe('agent');
+    expect(s.turns[1]?.text).toContain('42.');
+  });
 });
