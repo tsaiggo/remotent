@@ -18,7 +18,6 @@ interface SessionsProps {
   acpAgent: string;
   acpSessions: AcpSessionInfo[];
   acpSessionsLoading: boolean;
-  liveSessionId: string | null;
 }
 
 const PinSvg = ({ filled }: { filled: boolean }) => (
@@ -42,7 +41,6 @@ export function Sessions({
   acpAgent,
   acpSessions,
   acpSessionsLoading,
-  liveSessionId,
 }: SessionsProps) {
   const [filterMode, setFilterMode] = useState<FilterKind>('all');
   const [pinnedSet, setPinnedSet] = useState<Set<string>>(() => loadPinned());
@@ -63,7 +61,7 @@ export function Sessions({
     });
   };
 
-  const visibleSessions = acpSessions.filter((s) => s.sessionId !== liveSessionId);
+  const visibleSessions = acpSessions;
   const pinnedSessions = visibleSessions.filter((s) => pinnedSet.has(s.sessionId));
   const unpinnedSessions = visibleSessions.filter((s) => !pinnedSet.has(s.sessionId));
 

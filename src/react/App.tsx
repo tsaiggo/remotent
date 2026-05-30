@@ -46,8 +46,8 @@ export function App() {
       const meta = acpSnap.sessions.find((s) => s.sessionId === id);
       if (meta) {
         void acp.loadSession(meta.sessionId, meta.cwd);
-        state.currentSessionId = ACP_SESSION_ID;
-        setCurrentSessionId(ACP_SESSION_ID);
+        state.currentSessionId = meta.sessionId;
+        setCurrentSessionId(meta.sessionId);
         return;
       }
     }
@@ -60,7 +60,8 @@ export function App() {
     setCurrentNodeId(id);
   };
 
-  const isAcpSession = currentSessionId === ACP_SESSION_ID;
+  const isAcpSession =
+    currentSessionId === ACP_SESSION_ID || !!currentSessionId?.startsWith('ses_');
 
   const appendTurn = (turn: Turn) => {
     if (!currentSessionId) return;
@@ -131,7 +132,6 @@ export function App() {
             acpAgent={acpSnap.agent}
             acpSessions={acpSnap.sessions}
             acpSessionsLoading={acpSnap.sessionsLoading}
-            liveSessionId={acpSnap.sessionId}
           />,
           sessionsEl,
         )}
