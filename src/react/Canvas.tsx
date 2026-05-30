@@ -1,10 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NODES } from '../data/nodes.js';
 import { SESSIONS } from '../data/sessions.js';
 import { state } from '../state/store.js';
 import { switchView } from '../state/view.js';
 import type { Session, SessionNodeRef, Turn as TurnType } from '../types/index.js';
 import { Composer } from './Composer.js';
+import { TIMELINE_PREVIEW_SIZE, timelinePreview } from './timelinePreview.js';
 import { Turn } from './Turn.js';
 
 interface CanvasProps {
@@ -27,7 +28,16 @@ export function Canvas({
   const session: Session | undefined =
     sessionOverride ?? (currentSessionId ? SESSIONS[currentSessionId] : undefined);
   const timelineRef = useRef<HTMLOListElement>(null);
+  const [turnWindow, setTurnWindow] = useState(() => ({
+    sessionKey: currentSessionId ?? 'none',
+    visibleCount: TIMELINE_PREVIEW_SIZE,
+  }));
   void revision;
+
+  const sessionKey = currentSessionId ?? 'none';
+  const visibleCount =
+    turnWindow.sessionKey === sessionKey ? turnWindow.visibleCount : TIMELINE_PREVIEW_SIZE;
+  const preview = timelinePreview(session?.turns ?? [], visibleCount);
 
   useEffect(() => {
     if (timelineRef.current) {
@@ -109,8 +119,24 @@ export function Canvas({
       </div>
 
       <ol className="timeline" id="timeline" aria-label="Collaboration timeline" ref={timelineRef}>
-        {(session?.turns ?? []).map((turn, i) => (
-          <Turn key={`${currentSessionId ?? 'none'}-${String(i)}`} turn={turn} />
+        {preview.hiddenCount > 0 && (
+          <li className="timeline__load-older">
+            <button
+              type="button"
+              onClick={() => {
+                setTurnWindow({
+                  sessionKey,
+                  visibleCount: preview.visibleCount + TIMELINE_PREVIEW_SIZE,
+                });
+              }}
+            >
+              Load 10 older messages
+              <span>{preview.hiddenCount} earlier</span>
+            </button>
+          </li>
+        )}
+        {preview.turns.map((turn, i) => (
+          <Turn key={`${sessionKey}-${String(preview.hiddenCount + i)}`} turn={turn} />
         ))}
       </ol>
 
