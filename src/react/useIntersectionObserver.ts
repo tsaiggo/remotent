@@ -7,16 +7,25 @@ export function useIntersectionObserver(
   const ref = useRef<HTMLDivElement>(null);
   const callbackRef = useRef(onIntersect);
 
+  const root = options?.root;
+  const rootMargin = options?.rootMargin;
+  const threshold = options?.threshold;
+
   useEffect(() => {
     callbackRef.current = onIntersect;
   }, [onIntersect]);
 
   useEffect(() => {
+    const initOptions: IntersectionObserverInit = {};
+    if (root !== undefined) initOptions.root = root;
+    if (rootMargin !== undefined) initOptions.rootMargin = rootMargin;
+    if (threshold !== undefined) initOptions.threshold = threshold;
+
     const observer = new IntersectionObserver(([entry]) => {
       if (entry?.isIntersecting) {
         callbackRef.current();
       }
-    }, options);
+    }, initOptions);
 
     const currentRef = ref.current;
     if (currentRef) {
@@ -29,7 +38,7 @@ export function useIntersectionObserver(
       }
       observer.disconnect();
     };
-  }, [options]);
+  }, [root, rootMargin, threshold]);
 
   return ref;
 }
