@@ -44,11 +44,11 @@ export function Sessions({
 }: SessionsProps) {
   const [filterMode, setFilterMode] = useState<FilterKind>('all');
   const [pinnedSet, setPinnedSet] = useState<Set<string>>(() => loadPinned());
-  const [limit, setLimit] = useState(50);
+  const [limit, setLimit] = useState(10);
 
   const setFilter = (f: FilterKind) => {
     setFilterMode(f);
-    setLimit(50);
+    setLimit(10);
   };
 
   const togglePin = (id: string) => {
@@ -69,7 +69,7 @@ export function Sessions({
   const hasMore = limit < unpinnedSessions.length;
 
   const handleLoadMore = useCallback(() => {
-    setLimit((prev) => prev + 50);
+    setLimit((prev) => prev + 10);
   }, []);
 
   const loadMoreRef = useIntersectionObserver(handleLoadMore, { rootMargin: '200px' });
