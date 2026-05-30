@@ -42,6 +42,15 @@ export function App() {
   const effectiveRevision = revision + acpDelta;
 
   const selectSession = (id: string | null) => {
+    if (id && id.startsWith('ses_')) {
+      const meta = acpSnap.sessions.find((s) => s.sessionId === id);
+      if (meta) {
+        void acp.loadSession(meta.sessionId, meta.cwd);
+        state.currentSessionId = ACP_SESSION_ID;
+        setCurrentSessionId(ACP_SESSION_ID);
+        return;
+      }
+    }
     state.currentSessionId = id;
     setCurrentSessionId(id);
   };

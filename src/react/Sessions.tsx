@@ -144,6 +144,9 @@ export function Sessions({
                 session={s}
                 pinned
                 active={currentSessionId === s.sessionId}
+                onSelect={() => {
+                  onSelectSession(s.sessionId);
+                }}
                 onTogglePin={() => {
                   togglePin(s.sessionId);
                 }}
@@ -163,6 +166,9 @@ export function Sessions({
                   session={s}
                   pinned={false}
                   active={currentSessionId === s.sessionId}
+                  onSelect={() => {
+                    onSelectSession(s.sessionId);
+                  }}
                   onTogglePin={() => {
                     togglePin(s.sessionId);
                   }}
@@ -225,10 +231,11 @@ interface SessionThreadProps {
   session: AcpSessionInfo;
   pinned: boolean;
   active: boolean;
+  onSelect: () => void;
   onTogglePin: () => void;
 }
 
-function SessionThread({ session, pinned, active, onTogglePin }: SessionThreadProps) {
+function SessionThread({ session, pinned, active, onSelect, onTogglePin }: SessionThreadProps) {
   const title = sessionDisplayTitle(session);
   const time = formatRelativeTime(session.updatedAt);
   const project = cwdBasename(session.cwd);
@@ -238,7 +245,14 @@ function SessionThread({ session, pinned, active, onTogglePin }: SessionThreadPr
       data-kind="agent"
       data-session-id={session.sessionId}
       title={`${session.sessionId} · ${session.cwd}`}
-      style={{ cursor: 'default', opacity: 0.92 }}
+      tabIndex={0}
+      onClick={onSelect}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
     >
       <span className="thread__dot" aria-hidden="true"></span>
       <div className="thread__body">
@@ -247,7 +261,7 @@ function SessionThread({ session, pinned, active, onTogglePin }: SessionThreadPr
           <time className="thread__time">{time}</time>
         </div>
         <p className="thread__snippet">
-          <span className="tag tag--dev">{project}</span> <em>History · resume coming soon.</em>
+          <span className="tag tag--dev">{project}</span> <em>opencode session</em>
         </p>
       </div>
       <button

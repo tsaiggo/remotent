@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'vitest';
 import {
+  acpToSession,
   cwdBasename,
   formatRelativeTime,
   groupSessionsByDate,
   sessionDisplayTitle,
 } from './adapter.js';
-import type { AcpSessionInfo } from './client.js';
+import type { AcpSessionInfo, AcpSnapshot } from './client.js';
 
 const session = (
   id: string,
@@ -116,5 +117,58 @@ describe('sessionDisplayTitle', () => {
 
   test('falls back when title is null', () => {
     expect(sessionDisplayTitle(session('ses_abcdef0123', null, null))).toBe('Session abcdef01');
+  });
+});
+
+describe('acpToSession', () => {
+  const baseSnap: AcpSnapshot = {
+    status: 'connected',
+    error: null,
+    agent: 'opencode acp',
+    sessionId: 'ses_live12345678',
+    messages: [],
+    sessions: [],
+    sessionsLoading: false,
+    loadingSessionId: null,
+  };
+
+  test('connected: lede mentions ACP and agent', () => {
+    const s = acpToSession(baseSnap);
+    expect(s.crumb).toBe('OpenCode · live');
+    expect(s.lede).toContain('Agent Client Protocol');
+    expect(s.lede).toContain('opencode acp');
+  });
+
+  test('connecting: lede shows handshake state', () => {
+    const s = acpToSession({ ...baseSnap, status: 'connecting' });
+    expect(s.lede).toContain('Connecting');
+  });
+
+  test('error: lede surfaces the error message', () => {
+    const s = acpToSession({ ...baseSnap, status: 'error', error: 'boom' });
+    expect(s.lede).toContain('boom');
+    expect(s.lede).toContain('bun run server');
+  });
+
+  test('loading a stored session: lede shows loading state with title', () => {
+    const meta = session('ses_old98765432', '2026-05-25T10:00:00Z', 'My past chat');
+    const s = acpToSession({
+      ...baseSnap,
+      loadingSessionId: 'ses_old98765432',
+      sessions: [meta],
+    });
+    expect(s.crumb).toBe('OpenCode · loading');
+    expect(s.titleSans).toBe(' · loading');
+    expect(s.lede).toContain('My past chat');
+    expect(s.lede).toContain('Replaying');
+  });
+
+  test('loading without matching session metadata: still renders the id', () => {
+    const s = acpToSession({
+      ...baseSnap,
+      loadingSessionId: 'ses_unknown1234',
+      sessions: [],
+    });
+    expect(s.lede).toContain('ses_unknown1234');
   });
 });

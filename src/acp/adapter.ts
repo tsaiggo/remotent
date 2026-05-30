@@ -47,19 +47,33 @@ function acpMessageToTurn(msg: AcpMessage): Turn {
 
 export function acpToSession(snap: AcpSnapshot): Session {
   const shortId = snap.sessionId ? snap.sessionId.slice(0, 8) : '—';
+  const isLoading = snap.loadingSessionId !== null;
+  const loadedMeta = snap.loadingSessionId
+    ? snap.sessions.find((s) => s.sessionId === snap.loadingSessionId)
+    : undefined;
+  const loadedTitle = loadedMeta ? sessionDisplayTitle(loadedMeta) : null;
+
+  const crumb = isLoading ? 'OpenCode · loading' : 'OpenCode · live';
+  const kicker = isLoading
+    ? `loading ${snap.loadingSessionId?.slice(0, 8) ?? ''}…`
+    : `acp session ${shortId} · ${snap.status}`;
+  const titleSans = isLoading ? ' · loading' : ' · live ACP';
+  const lede = isLoading
+    ? `Replaying <code>${escapeHtml(loadedTitle ?? snap.loadingSessionId ?? '')}</code> from opencode… (text replay is upstream-pending in opencode; tool calls will appear)`
+    : snap.status === 'connected'
+      ? `Real <code>${snap.agent}</code> session via Agent Client Protocol. Prompts go straight to the agent; replies stream back live.`
+      : snap.status === 'connecting'
+        ? `Connecting to <code>${snap.agent}</code>…`
+        : snap.status === 'error'
+          ? `Connection error: ${snap.error ?? 'unknown'}. Start the sidecar with <code>bun run server</code>.`
+          : `ACP sidecar offline. Start it with <code>bun run server</code> in another terminal.`;
+
   return {
-    crumb: 'OpenCode · live',
-    kicker: `acp session ${shortId} · ${snap.status}`,
+    crumb,
+    kicker,
     titleSerif: 'OpenCode',
-    titleSans: ' · live ACP',
-    lede:
-      snap.status === 'connected'
-        ? `Real <code>${snap.agent}</code> session via Agent Client Protocol. Prompts go straight to the agent; replies stream back live.`
-        : snap.status === 'connecting'
-          ? `Connecting to <code>${snap.agent}</code>…`
-          : snap.status === 'error'
-            ? `Connection error: ${snap.error ?? 'unknown'}. Start the sidecar with <code>bun run server</code>.`
-            : `ACP sidecar offline. Start it with <code>bun run server</code> in another terminal.`,
+    titleSans,
+    lede,
     nodes: [],
     turns: snap.messages.map(acpMessageToTurn),
   };

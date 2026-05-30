@@ -43,6 +43,7 @@ export interface AcpSnapshot {
   messages: AcpMessage[];
   sessions: AcpSessionInfo[];
   sessionsLoading: boolean;
+  loadingSessionId: string | null;
 }
 
 type Listener = () => void;
@@ -99,6 +100,7 @@ class AcpClient implements Pick<Agent, never> {
     messages: [],
     sessions: [],
     sessionsLoading: false,
+    loadingSessionId: null,
   };
   private pendingUserPrompts: string[] = [];
 
@@ -224,6 +226,32 @@ class AcpClient implements Pick<Agent, never> {
     } catch (e) {
       console.warn('[acp] listSessions failed', e);
       this.update({ sessionsLoading: false });
+    }
+  }
+
+  async loadSession(sessionId: string, cwd: string): Promise<void> {
+    if (this.snapshot.status !== 'connected' || !this.conn) {
+      console.warn('[acp] loadSession called while not connected');
+      return;
+    }
+    if (this.snapshot.sessionId === sessionId && this.snapshot.loadingSessionId === null) {
+      return;
+    }
+    this.update({
+      loadingSessionId: sessionId,
+      sessionId,
+      messages: [],
+      error: null,
+    });
+    try {
+      console.log('[acp] loadSession →', sessionId, cwd);
+      await this.conn.loadSession({ sessionId, cwd, mcpServers: [] });
+      console.log('[acp] loadSession ← ok', sessionId);
+      this.update({ loadingSessionId: null });
+      void this.refreshSessions();
+    } catch (e) {
+      console.warn('[acp] loadSession failed', e);
+      this.update({ loadingSessionId: null, error: `loadSession failed: ${String(e)}` });
     }
   }
 
