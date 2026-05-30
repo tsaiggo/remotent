@@ -5,20 +5,31 @@ export function useIntersectionObserver(
   options?: IntersectionObserverInit,
 ) {
   const ref = useRef<HTMLDivElement>(null);
+  const callbackRef = useRef(onIntersect);
+
+  useEffect(() => {
+    callbackRef.current = onIntersect;
+  }, [onIntersect]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => {
       if (entry?.isIntersecting) {
-        onIntersect();
+        callbackRef.current();
       }
     }, options);
 
-    if (ref.current) {
-      observer.observe(ref.current);
+    const currentRef = ref.current;
+    if (currentRef) {
+      observer.observe(currentRef);
     }
 
-    return () => observer.disconnect();
-  }, [onIntersect, options]);
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+      observer.disconnect();
+    };
+  }, [options]);
 
   return ref;
 }
